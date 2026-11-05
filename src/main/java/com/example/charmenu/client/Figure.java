@@ -22,7 +22,7 @@ import net.minecraft.world.entity.LivingEntity;
 
 import java.util.UUID;
 
-// Your own skin on a real player model, fast asleep on the branch: arm under the head, one leg dangling, breathing slowly,
+// Your own skin on a real player model, fast asleep on the branch: one arm under the head, one leg dangling, breathing slowly,
 // with a small black cat curled up on your chest and your other hand slowly stroking it.
 final class Figure {
     private static final float SCALE = 1.7f;
@@ -173,12 +173,12 @@ final class Figure {
         m.body.setRotation(0, 0, 0);
         m.body.zScale = 1 + 0.03f * breath;
 
-        // right arm behind the head
-        m.rightArm.setPos(-5, 2, 2.6f);
-        m.rightArm.setRotation(-172 * d, 0, 18 * d);
-        // left hand rests on the cat and strokes it from the shoulders to the tail, slowly
-        m.leftArm.setPos(5, 2, -0.2f - 0.06f * breath);
-        m.leftArm.setRotation((-46 + 7 * stroke) * d, 0, (70 - 24 * stroke) * d);
+        // the arm on the camera's side is behind the head, so nothing hides the cat
+        m.leftArm.setPos(5, 2, 2.6f);
+        m.leftArm.setRotation(-172 * d, 0, -18 * d);
+        // the other hand reaches across, rests on the cat and strokes it from the shoulders to the tail, slowly
+        m.rightArm.setPos(-5, 2, -0.2f - 0.06f * breath);
+        m.rightArm.setRotation((-40 + 6 * stroke) * d, 0, -(66 - 22 * stroke) * d);
 
         // left leg dangles off the branch on the camera's side and rocks a tiny bit
         float rock = (float) Math.sin(time * 0.45) * 2.5f * d;

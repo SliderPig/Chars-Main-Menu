@@ -928,10 +928,6 @@ def make_big_tree():
     limb(X([(15, 17, z + 2, .75), (17.5, 13.5, z + 2.6, .55), (18, 11.5, z + 3, .45)]), thin, seed=17)
 
     # twigs carrying blossom just behind the limb, right behind where the sleeper lies
-    limb(X([(-8, 14, z + 2, .6), (-8, 17.5, z - 2, .5), (-8, 18.5, z - 5, .45)]), thin, seed=18)
-    limb(X([(1, 14, z + 2, .6), (1.5, 18, z - 2.5, .5), (1.5, 19.5, z - 5.5, .45)]), thin, seed=19)
-    limb(X([(11, 16, z + 2, .6), (11, 19, z - 2, .5), (11, 20.5, z - 5, .45)]), thin, seed=20)
-    limb(X([(-5, 14.4, z + 3, .55), (-4.8, 17.5, z + 5, .45), (-3.6, 20, z + 7, .45)]), thin, seed=22)
 
     # a good flat bed on top of the limb where the sleeper lies
     bed_y = 16
@@ -951,7 +947,7 @@ def make_big_tree():
     wood_from_cells(cells)
     for c in thin:
         if c not in cells:
-            S.set(c[0], c[1], c[2], 'cherry_wood[axis=y]')
+            S.set(c[0], c[1], c[2], 'stripped_cherry_wood[axis=y]', 'AC8C98')
     rnd = random.Random(21)
     for x in range(bed0, bed1 + 1):
         for dz in (int(z) + 1,):
@@ -965,8 +961,8 @@ def make_big_tree():
         (4.5, 25.2, z - 9.5, 6, 3, 4.5), (-23, 24.4, z + 1, 5, 2.6, 4.2),
         # low ones under the limb
         (-3, 10.4, z + 3.4, 4.2, 2.4, 3.2), (-16, 10.8, z + 3, 4.6, 2.6, 3.6), (18, 10.6, z + 3.2, 3.6, 2.2, 3),
-        # right behind the sleeper, and one nearer the camera in the top corner of the view
-        (-8, 19.4, z - 6, 5, 2.6, 3.5), (1.5, 20.4, z - 7, 5.5, 2.8, 4), (11, 21.2, z - 6, 4.5, 2.6, 3.5), (-3.6, 20.9, z + 7, 2.9, 1.6, 2.3),
+        # right behind the sleeper
+        (-8, 18.2, z - 5, 5, 2.6, 3.5), (1.5, 19.2, z - 5.5, 5.5, 2.8, 4), (11, 20, z - 5, 4.5, 2.6, 3.5),
     ]
     for i, (cx, cy, cz, rx, ry, rz) in enumerate(clouds):
         blossom(cx * k, cy, cz, rx * k, ry, rz, 100 + i, keep_out=keep)
