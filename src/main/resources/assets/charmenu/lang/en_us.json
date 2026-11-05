@@ -1,0 +1,12 @@
+{
+  "charmenu.settings.title": "Menu settings",
+  "charmenu.settings.scene": "Cherry house menu",
+  "charmenu.settings.animation": "Fly-through animation",
+  "charmenu.settings.quality": "Quality",
+  "charmenu.settings.ambience": "Birds and breeze",
+  "charmenu.settings.music": "Gentle music",
+  "charmenu.settings.high": "High",
+  "charmenu.settings.low": "Low",
+  "charmenu.settings.note": "Sound follows your Music volume slider.",
+  "charmenu.settings.open": "Menu settings"
+}

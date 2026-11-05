@@ -1,0 +1,13 @@
+{
+  "vertex": "charmenu:sky",
+  "fragment": "charmenu:sky",
+  "attributes": ["Position"],
+  "samplers": [{ "name": "Sampler0" }],
+  "uniforms": [
+    { "name": "Forward", "type": "float", "count": 3, "values": [0,0,-1] },
+    { "name": "Right", "type": "float", "count": 3, "values": [1,0,0] },
+    { "name": "Up", "type": "float", "count": 3, "values": [0,1,0] },
+    { "name": "SunDir", "type": "float", "count": 3, "values": [0,1,0] },
+    { "name": "Time", "type": "float", "count": 1, "values": [0] }
+  ]
+}
