@@ -1,5 +1,5 @@
 {
-  "blend": { "func": "add", "srcrgb": "1", "dstrgb": "1-srcalpha" },
+  "blend": { "func": "add", "srcrgb": "srcalpha", "dstrgb": "1-srcalpha", "srcalpha": "1", "dstalpha": "1-srcalpha" },
   "vertex": "charmenu:glass",
   "fragment": "charmenu:glass",
   "attributes": ["Position", "UV0"],

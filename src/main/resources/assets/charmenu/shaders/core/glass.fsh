@@ -1,6 +1,7 @@
 #version 150
 
-// A soft rounded pill in real screen pixels: faint glass fill, a thin bright rim, and a glow outside it. The output is premultiplied.
+// A soft rounded pill in real screen pixels: faint glass fill, a thin bright rim, and a glow outside it.
+// Worked out premultiplied, handed back as ordinary colour and alpha so it blends the same way as everything else in the menus.
 uniform vec2 Half;
 uniform float Radius;
 uniform vec4 FillTop;
@@ -27,5 +28,5 @@ void main() {
     float rimA = Rim.a * band * mix(1.15, 0.7, t);
     rgb = Rim.rgb * rimA + rgb * (1.0 - rimA);
     a = rimA + a * (1.0 - rimA);
-    fragColor = vec4(rgb, a);
+    fragColor = vec4(a > 0.0001 ? rgb / a : vec3(0.0), a);
 }

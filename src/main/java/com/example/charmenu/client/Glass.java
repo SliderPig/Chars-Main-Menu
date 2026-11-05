@@ -1,5 +1,6 @@
 package com.example.charmenu.client;
 
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.BufferUploader;
@@ -10,6 +11,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.ShaderInstance;
 import org.joml.Matrix4f;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL14;
 
 // Rounded see-through glass shapes, drawn by a small shader so the corners are perfectly smooth at any size.
 public final class Glass {
@@ -65,7 +68,11 @@ public final class Glass {
         s.getUniform("Glow").set(glow[0], glow[1], glow[2], glow[3]);
         s.getUniform("GlowSize").set(glowSizePx);
         RenderSystem.setShader(() -> s);
+        // some screens leave the blending switched round; set it plainly every time so glass always looks the same
         RenderSystem.enableBlend();
+        GL11.glEnable(GL11.GL_BLEND);
+        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+        GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
         Matrix4f m = g.pose().last().pose();
         BufferBuilder b = Tesselator.getInstance().getBuilder();
         b.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
