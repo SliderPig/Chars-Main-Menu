@@ -1,0 +1,29 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+
+[[mods]]
+modId="charmenu"
+version="${file.jarVersion}"
+displayName="{C} Char's Main Menu"
+authors="Char"
+# PC side only: servers and other players don't need it.
+displayTest="IGNORE_ALL_VERSION"
+description='''
+A hand-built cherry wood house as the main menu. Press a button and the camera flies through the double doors, down the hall and out the back,
+to a giant cherry tree with your own skin asleep on its branch.
+'''
+
+[[dependencies.charmenu]]
+modId="forge"
+mandatory=true
+versionRange="[47,)"
+ordering="NONE"
+side="CLIENT"
+
+[[dependencies.charmenu]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.20.1,1.21)"
+ordering="NONE"
+side="CLIENT"
