@@ -178,7 +178,7 @@ final class Figure {
         m.leftArm.setRotation(-176 * d, 0, -16 * d);
         // the other arm lies down along the body with its hand on the cat, stroking along its back, slowly
         m.rightArm.setPos(-5, 2, -0.2f - 0.06f * breath);
-        m.rightArm.setRotation((-26 + 8 * stroke) * d, 0, -(36 - 14 * stroke) * d);
+        m.rightArm.setRotation((-32 + 8 * stroke) * d, 0, -(36 - 14 * stroke) * d);
 
         // left leg dangles off the branch on the camera's side and rocks a tiny bit
         float rock = (float) Math.sin(time * 0.45) * 2.5f * d;

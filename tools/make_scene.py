@@ -961,6 +961,8 @@ def make_big_tree():
         (4.5, 25.2, z - 9.5, 6, 3, 4.5), (-23, 24.4, z + 1, 5, 2.6, 4.2),
         # low ones under the limb
         (-3, 10.4, z + 3.4, 4.2, 2.4, 3.2), (-16, 10.8, z + 3, 4.6, 2.6, 3.6), (18, 10.6, z + 3.2, 3.6, 2.2, 3),
+        # little tufts along the near side of the limb, under the sleeper
+        (2.5, 12.6, z + 4.6, 2.4, 1.3, 1.3), (10, 13.2, z + 4.6, 2.6, 1.3, 1.3), (-4, 12.8, z + 4.4, 2.2, 1.4, 1.2),
         # right behind the sleeper
         (-8, 18.2, z - 5, 5, 2.6, 3.5), (1.5, 19.2, z - 5.5, 5.5, 2.8, 4), (11, 20, z - 5, 4.5, 2.6, 3.5),
     ]
@@ -1327,7 +1329,7 @@ def make_meta():
     # camera keys: x y z, look x y z, field of view
     front = (-2.5, 5.0, 43.0, -8.0, 9.8, -6.0, 56.0)
     lines.append('front ' + ' '.join(f'{v:.2f}' for v in front))
-    tree = (1.85, 20.7, TREE_Z + 14.55, 1.85, 16.6, TREE_Z + 3.55, 46.0)
+    tree = (1.85, 19.8, TREE_Z + 14.55, 1.85, 17.0, TREE_Z + 3.55, 46.0)
     lines.append('tree ' + ' '.join(f'{v:.2f}' for v in tree))
     fly_out = [
         (-1.6, 4.6, 30.0, -2.0, 6.4, -6.0, 57.0),
