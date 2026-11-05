@@ -250,7 +250,7 @@ public final class Walk {
                 mc.setScreen(new net.minecraft.client.gui.screens.TitleScreen());
             }
         });
-        shot(160, "14_back_from_world");
+        shot(300, "14_back_from_world");
         later(5, Walk::quit);
     }
 

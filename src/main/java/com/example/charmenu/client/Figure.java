@@ -25,7 +25,7 @@ import java.util.UUID;
 // Your own skin on a real player model, fast asleep on the branch: arm under the head, one leg dangling, breathing slowly,
 // with a small black cat curled up on your chest and your other hand slowly stroking it.
 final class Figure {
-    private static final float SCALE = 1.35f;
+    private static final float SCALE = 1.7f;
     private static final float CAT_SCALE = 0.58f;
     private static final ResourceLocation CAT_SKIN = new ResourceLocation("textures/entity/cat/all_black.png");
 
@@ -45,6 +45,12 @@ final class Figure {
         UUID id = profile.getId() != null ? profile.getId() : new UUID(0, 0);
         skin = DefaultPlayerSkin.getDefaultSkin(id);
         slim = "slim".equals(DefaultPlayerSkin.getSkinModelName(id));
+        if (Boolean.getBoolean("charmenu.steve")) {
+            // for testing with a bright skin when there's no real account
+            skin = new ResourceLocation("textures/entity/player/wide/steve.png");
+            slim = false;
+            return;
+        }
         // the game fetches it in the background and calls back on the main thread when the picture is ready, the default skin shows until then
         mc.getSkinManager().registerSkins(profile, (type, location, texture) -> {
             if (type == MinecraftProfileTexture.Type.SKIN) {
@@ -90,6 +96,7 @@ final class Figure {
         pose.scale(-1, -1, 1);
         pose.translate(0, -0.75, 0);
 
+        Shaders.figure.getUniform("Lift").set(0f);
         RenderSystem.setShader(() -> Shaders.figure);
         RenderSystem.setShaderTexture(0, skin);
         BufferBuilder b = Tesselator.getInstance().getBuilder();
@@ -138,6 +145,8 @@ final class Figure {
         pose.mulPose(Axis.YP.rotationDegrees(24));
         pose.scale(CAT_SCALE, CAT_SCALE, CAT_SCALE);
 
+        // a black cat on dark clothes would vanish: a touch of soft sheen keeps its shape readable
+        Shaders.figure.getUniform("Lift").set(0.075f);
         RenderSystem.setShader(() -> Shaders.figure);
         RenderSystem.setShaderTexture(0, CAT_SKIN);
         BufferBuilder b = Tesselator.getInstance().getBuilder();

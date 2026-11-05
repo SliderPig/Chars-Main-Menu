@@ -99,7 +99,7 @@ def main():
                 out.extend(fill(x) for x in ([v] if isinstance(v, str) else v))
         return out
 
-    extra = [f'-Dcharmenu.walk={MODE}']
+    extra = [f'-Dcharmenu.walk={MODE}', '-Dcharmenu.steve=true']
     for a in sys.argv:
         if a.startswith('scene='):
             extra.append('-Dcharmenu.scenedir=' + os.path.abspath(a[len('scene='):]))

@@ -833,7 +833,7 @@ def limb(points, cells, knots=0.0, seed=3):
     rnd = random.Random(seed)
     phase = rnd.random() * 100
     for idx, (x, y, z, r) in enumerate(catmull(points)):
-        rr = max(r, 0.45) * (1 + knots * math.sin(idx * 0.13 + phase) * 0.5 + knots * 0.5 * math.sin(idx * 0.031 + phase * 2))
+        rr = max(r, 0.72) * (1 + knots * math.sin(idx * 0.13 + phase) * 0.5 + knots * 0.5 * math.sin(idx * 0.031 + phase * 2))
         ri = int(math.ceil(rr)) + 1
         for ax in range(int(x) - ri, int(x) + ri + 1):
             for ay in range(int(y) - ri, int(y) + ri + 1):
@@ -874,13 +874,15 @@ def wood_from_cells(cells, seed=9):
     pale = 'stripped_cherry_wood[axis=y]'
     bark = 'cherry_wood[axis=y]'
     for (x, y, z) in cells:
-        n = sfbm(x / 5.5 + y * .15, (y * 1.1 + z * .9) / 2.3, 2, seed) + rnd.uniform(-.14, .14)
-        if n < -.3:
+        n = sfbm(x / 4.5 + y * .15, (y * 1.1 + z * .9) / 2.3, 2, seed) + rnd.uniform(-.1, .1)
+        if n < -.3 and (x > 22 or x < -14):
             S.set(x, y, z, bark)
-        elif n < .1:
-            S.set(x, y, z, pale, 'E0C9CC')
+        elif n < -.1:
+            S.set(x, y, z, pale, 'D6BCC0')
+        elif n < .14:
+            S.set(x, y, z, pale, 'E6D0D2')
         else:
-            S.set(x, y, z, pale, 'F4E2E2')
+            S.set(x, y, z, pale, 'F6E6E6')
 
 
 SLEEPER = dict(x=6.3, y=0.0, z=TREE_Z + 2.5, yaw=0.0)
@@ -897,10 +899,11 @@ def make_big_tree():
 
     trunk = [
         (37, -5, z, 8.0), (39, 3, z, 6.5), (39, 9, z + .5, 5.2), (36, 15, z + .5, 4.3), (30, 19.5, z + 1, 3.6),
-        (22.5, 20.8, z + 1.5, 3.1), (15.5, 18.2, z + 2, 2.65), (9, 15.2, z + 2.5, 2.35), (3, 13.8, z + 2.5, 2.1), (-4, 13.4, z + 2.5, 1.8),
-        (-11, 14, z + 2, 1.45), (-18, 15.6, z + 1.5, 1.1), (-25, 18.3, z + 1, .8), (-32, 21.8, z + .5, .55),
+        (22.5, 20.8, z + 1.5, 3.0), (15.5, 18.2, z + 2, 2.3), (9, 15.2, z + 2.5, 1.75), (3, 13.8, z + 2.5, 1.5), (-4, 13.4, z + 2.5, 1.35),
+        (-11, 14, z + 2, 1.15), (-18, 15.6, z + 1.5, .95), (-25, 18.3, z + 1, .75), (-32, 21.8, z + .5, .55),
     ]
     cells = set()
+    thin = set()
     limb(X(trunk), cells, knots=.17, seed=2)
     # roots flare out across the rocks
     limb(X([(34, 1, z - 1, 3.6), (26, -1.5, z + 2, 2.3), (19, -3, z + 3, 1.2)]), cells, knots=.2, seed=3)
@@ -912,23 +915,23 @@ def make_big_tree():
     # up from the top of the arch
     limb(X([(27, 20, z + 1, 2.0), (24, 25, z, 1.45), (20.5, 29.5, z - 1.5, .95), (17, 32.5, z - 3, .55)]), cells, knots=.15, seed=8)
     # rising off the long limb
-    limb(X([(12, 16.6, z + 2.2, 1.25), (10, 21, z + 1.5, .9), (6.5, 25.5, z, .65), (3, 28.5, z - 1, .45)]), cells, knots=.12, seed=9)
-    limb(X([(-3, 13.8, z + 2.4, 1.05), (-6, 18, z + 2, .8), (-9.5, 22.5, z + 1, .55), (-13, 25.5, z, .45)]), cells, knots=.12, seed=10)
-    limb(X([(-17, 15.6, z + 1.5, .8), (-20, 19, z + 1, .6), (-23, 23, z + .5, .45)]), cells, seed=11)
+    limb(X([(12, 16.6, z + 2.2, 1.25), (10, 21, z + 1.5, .9), (6.5, 25.5, z, .65), (3, 28.5, z - 1, .45)]), thin, knots=.12, seed=9)
+    limb(X([(-3, 13.8, z + 2.4, 1.05), (-6, 18, z + 2, .8), (-9.5, 22.5, z + 1, .55), (-13, 25.5, z, .45)]), thin, knots=.12, seed=10)
+    limb(X([(-17, 15.6, z + 1.5, .8), (-20, 19, z + 1, .6), (-23, 23, z + .5, .45)]), thin, seed=11)
     # towards and away from the camera, for depth
-    limb(X([(18, 19.4, z + 1.8, 1.1), (16, 22.5, z + 7, .75), (13, 24.5, z + 10.5, .45)]), cells, seed=12)
-    limb(X([(7, 15, z + 2.4, .9), (7, 20, z - 4, .65), (4.5, 24, z - 8.5, .45)]), cells, seed=13)
-    limb(X([(32, 18, z + .5, 1.3), (31, 23, z - 4, .9), (28, 26, z - 8, .5)]), cells, seed=14)
+    limb(X([(18, 19.4, z + 1.8, 1.1), (16, 22.5, z + 7, .75), (13, 24.5, z + 10.5, .45)]), thin, seed=12)
+    limb(X([(7, 15, z + 2.4, .9), (7, 20, z - 4, .65), (4.5, 24, z - 8.5, .45)]), thin, seed=13)
+    limb(X([(32, 18, z + .5, 1.3), (31, 23, z - 4, .9), (28, 26, z - 8, .5)]), thin, seed=14)
     # twigs hanging below the limb, carrying the low blossom
-    limb(X([(1, 13, z + 2.4, .75), (-1.5, 10.5, z + 3, .55), (-3, 8.8, z + 3, .45)]), cells, seed=15)
-    limb(X([(-13, 14.2, z + 1.8, .65), (-15, 12, z + 2.4, .5), (-16, 10.5, z + 2.6, .45)]), cells, seed=16)
-    limb(X([(15, 17, z + 2, .75), (17.5, 13.5, z + 2.6, .55), (18, 11.5, z + 3, .45)]), cells, seed=17)
+    limb(X([(1, 13, z + 2.4, .75), (-1.5, 11.5, z + 3, .55), (-3, 10.4, z + 3, .45)]), thin, seed=15)
+    limb(X([(-13, 14.2, z + 1.8, .65), (-15, 12, z + 2.4, .5), (-16, 10.5, z + 2.6, .45)]), thin, seed=16)
+    limb(X([(15, 17, z + 2, .75), (17.5, 13.5, z + 2.6, .55), (18, 11.5, z + 3, .45)]), thin, seed=17)
 
     # twigs carrying blossom just behind the limb, right behind where the sleeper lies
-    limb(X([(-8, 14, z + 2, .6), (-8, 17.5, z - 2, .5), (-8, 18.5, z - 5, .45)]), cells, seed=18)
-    limb(X([(1, 14, z + 2, .6), (1.5, 18, z - 2.5, .5), (1.5, 19.5, z - 5.5, .45)]), cells, seed=19)
-    limb(X([(11, 16, z + 2, .6), (11, 19, z - 2, .5), (11, 20.5, z - 5, .45)]), cells, seed=20)
-    limb(X([(-6, 14.4, z + 3, .55), (-7, 17.5, z + 5, .45), (-7.5, 20, z + 6.5, .45)]), cells, seed=22)
+    limb(X([(-8, 14, z + 2, .6), (-8, 17.5, z - 2, .5), (-8, 18.5, z - 5, .45)]), thin, seed=18)
+    limb(X([(1, 14, z + 2, .6), (1.5, 18, z - 2.5, .5), (1.5, 19.5, z - 5.5, .45)]), thin, seed=19)
+    limb(X([(11, 16, z + 2, .6), (11, 19, z - 2, .5), (11, 20.5, z - 5, .45)]), thin, seed=20)
+    limb(X([(-5, 14.4, z + 3, .55), (-4.8, 17.5, z + 5, .45), (-3.6, 20, z + 7, .45)]), thin, seed=22)
 
     # a good flat bed on top of the limb where the sleeper lies
     bed_y = 16
@@ -937,6 +940,7 @@ def make_big_tree():
         for dz in range(int(z) - 2, int(z) + 8):
             for y in range(bed_y, bed_y + 4):
                 cells.discard((x, y, dz))
+                thin.discard((x, y, dz))
     for x in range(bed0 - 1, bed1 + 1):
         for dz in range(int(z) + 1, int(z) + 4):
             cells.add((x, bed_y - 1, dz))
@@ -945,21 +949,24 @@ def make_big_tree():
     SLEEPER['y'] = float(bed_y)
     SLEEPER['z'] = z + 3.55
     wood_from_cells(cells)
+    for c in thin:
+        if c not in cells:
+            S.set(c[0], c[1], c[2], 'cherry_wood[axis=y]')
     rnd = random.Random(21)
     for x in range(bed0, bed1 + 1):
         for dz in (int(z) + 1,):
             if rnd.random() < .4:
                 S.set(x, bed_y, dz, f'pink_petals[flower_amount={rnd.randint(1, 2)},facing={rnd.choice(["north", "south", "east", "west"])}]')
 
-    keep = lambda x, y, zz: (-3 <= x <= 13 and 15 <= y <= 24 and z - 3 <= zz <= z + 12)  # clear air round the sleeper
+    keep = lambda x, y, zz: (1 <= x <= 12 and 15 <= y <= 24 and z - 3 <= zz <= z + 12)  # clear air round the sleeper
     clouds = [
         (18, 33.5, z - 3, 10, 4.2, 8), (3, 29.8, z - 1, 8.5, 3.6, 6.5), (-13, 26.2, z, 7.5, 3.4, 6), (-33, 22, z + .5, 8.5, 4.8, 6.5),
         (46, 31, z - 2.5, 9, 4.6, 7), (56, 26.5, z - 2, 5, 4.4, 4.5), (31, 27, z - 8.5, 6.5, 3.4, 5), (13, 25.4, z + 11, 5, 2.6, 4),
         (4.5, 25.2, z - 9.5, 6, 3, 4.5), (-23, 24.4, z + 1, 5, 2.6, 4.2),
         # low ones under the limb
-        (-3, 8.6, z + 3, 4.2, 2.4, 3.2), (-16, 10.8, z + 3, 4.6, 2.6, 3.6), (18, 10.6, z + 3.2, 3.6, 2.2, 3),
+        (-3, 10.4, z + 3.4, 4.2, 2.4, 3.2), (-16, 10.8, z + 3, 4.6, 2.6, 3.6), (18, 10.6, z + 3.2, 3.6, 2.2, 3),
         # right behind the sleeper, and one nearer the camera in the top corner of the view
-        (-8, 19.4, z - 6, 5, 2.6, 3.5), (1.5, 20.4, z - 7, 5.5, 2.8, 4), (11, 21.2, z - 6, 4.5, 2.6, 3.5), (-8, 21.2, z + 7, 3.6, 2, 3),
+        (-8, 19.4, z - 6, 5, 2.6, 3.5), (1.5, 20.4, z - 7, 5.5, 2.8, 4), (11, 21.2, z - 6, 4.5, 2.6, 3.5), (-3.6, 20.9, z + 7, 2.9, 1.6, 2.3),
     ]
     for i, (cx, cy, cz, rx, ry, rz) in enumerate(clouds):
         blossom(cx * k, cy, cz, rx * k, ry, rz, 100 + i, keep_out=keep)
@@ -1049,7 +1056,7 @@ def green_tree(x, z, h, seed, kind='oak'):
 
 def make_other_trees():
     # A pair of cherries framing the house, more behind it, then a scattering further out.
-    small_cherry(-33, 6, 11, 61, 1.15)
+    small_cherry(-38, 3, 11, 61, 1.15)
     small_cherry(33, 8, 12, 62, 1.15)
     small_cherry(-44, -14, 10, 63)
     small_cherry(47, -8, 10, 64)
@@ -1324,7 +1331,7 @@ def make_meta():
     # camera keys: x y z, look x y z, field of view
     front = (-2.5, 5.0, 43.0, -8.0, 9.8, -6.0, 56.0)
     lines.append('front ' + ' '.join(f'{v:.2f}' for v in front))
-    tree = (0.9, 20.2, TREE_Z + 14.55, 0.9, 16.4, TREE_Z + 3.55, 46.0)
+    tree = (1.85, 20.7, TREE_Z + 14.55, 1.85, 16.6, TREE_Z + 3.55, 46.0)
     lines.append('tree ' + ' '.join(f'{v:.2f}' for v in tree))
     fly_out = [
         (-1.6, 4.6, 30.0, -2.0, 6.4, -6.0, 57.0),
