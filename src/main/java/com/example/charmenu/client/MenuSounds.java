@@ -18,7 +18,9 @@ public final class MenuSounds {
     private static final ResourceLocation WHOOSH = new ResourceLocation(CharMenu.MODID, "menu.whoosh");
     private static final ResourceLocation TAP = new ResourceLocation(CharMenu.MODID, "menu.tap");
 
-    private static Loop ambience, music;
+    private static final ResourceLocation PURR = new ResourceLocation(CharMenu.MODID, "menu.purr");
+
+    private static Loop ambience, music, purr;
 
     private MenuSounds() {}
 
@@ -88,6 +90,17 @@ public final class MenuSounds {
             ambience.leave();
             ambience = null;
         }
+        // the cat's purr, only when the camera is resting by the tree, and very quiet
+        boolean atTree = MenuConfig.ambience && Director.get().state() == Director.State.TREE;
+        if (atTree) {
+            if (purr == null || purr.isStopped()) {
+                purr = new Loop(PURR, 0.22f);
+                mc.getSoundManager().play(purr);
+            }
+        } else if (purr != null) {
+            purr.leave();
+            purr = null;
+        }
         if (MenuConfig.music) {
             if (music == null || music.isStopped()) {
                 music = new Loop(MUSIC, 0.8f);
@@ -103,7 +116,9 @@ public final class MenuSounds {
     public static void stopAll() {
         if (ambience != null) ambience.stopNow();
         if (music != null) music.stopNow();
+        if (purr != null) purr.stopNow();
         ambience = null;
         music = null;
+        purr = null;
     }
 }

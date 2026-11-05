@@ -44,6 +44,7 @@ final class SceneData {
     double[] indoors = {0, 0, 0, 0, 0, 0};
     final List<double[]> flyOut = new ArrayList<>(), flyBack = new ArrayList<>();
     final List<Door> doors = new ArrayList<>();
+    final List<Paintings.Hung> paintings = new ArrayList<>();
 
     int index(int x, int y, int z) {
         return ((x - x0) * nz + (z - z0)) * ny + (y - y0);
@@ -87,6 +88,7 @@ final class SceneData {
                     case "flyout" -> flyOut.add(numbers(w, 1));
                     case "flyback" -> flyBack.add(numbers(w, 1));
                     case "door" -> doors.add(new Door(w[1], Integer.parseInt(w[2]), Integer.parseInt(w[3]), Integer.parseInt(w[4]), w[5], Double.parseDouble(w[6]), Double.parseDouble(w[7]), Integer.parseInt(w[8])));
+                    case "painting" -> paintings.add(new Paintings.Hung(w[1], Double.parseDouble(w[2]), Double.parseDouble(w[3]), Double.parseDouble(w[4]), Double.parseDouble(w[5]), Double.parseDouble(w[6]), Integer.parseInt(w[7])));
                     default -> {
                     }
                 }

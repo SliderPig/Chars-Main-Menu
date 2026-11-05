@@ -4,6 +4,7 @@ import com.example.charmenu.client.Glass;
 import com.example.charmenu.client.MenuHooks;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractSelectionList;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -31,6 +32,10 @@ abstract class AbstractSelectionListMixin {
     @Shadow
     public abstract int getRowWidth();
 
+    @Shadow
+    @Final
+    protected int width;
+
     @Inject(method = "render", at = @At("HEAD"), require = 0)
     private void charmenu$seeThrough(GuiGraphics g, int mouseX, int mouseY, float partial, CallbackInfo ci) {
         if (!MenuHooks.active()) return;
@@ -39,5 +44,14 @@ abstract class AbstractSelectionListMixin {
         float cx = (x0 + x1) / 2f;
         float half = Math.min((x1 - x0) / 2f - 2, getRowWidth() / 2f + 16);
         Glass.panel(g, cx - half, y0 + 1, half * 2, y1 - y0 - 2, 10, 1f);
+    }
+
+    // the chosen row: a soft bright pill rather than a white outline round a black box
+    @Inject(method = "renderSelection", at = @At("HEAD"), cancellable = true, require = 0)
+    private void charmenu$selection(GuiGraphics g, int top, int rowWidth, int rowHeight, int outer, int inner, CallbackInfo ci) {
+        if (!MenuHooks.active()) return;
+        float left = x0 + (width - rowWidth) / 2f;
+        Glass.pill(g, left, top - 2, rowWidth, rowHeight + 4, 0.7f, 0.8f, true);
+        ci.cancel();
     }
 }

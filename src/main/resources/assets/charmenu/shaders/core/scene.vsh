@@ -47,4 +47,6 @@ void main() {
     vec3 sunlight = vec3(1.02, 0.92, 0.76) * sun * direct * 0.78;
     vec3 lamp = vec3(1.0, 0.70, 0.40) * pow(lm.x, 1.7) * 1.05;
     light = ambient + sunlight + lamp;
+    // light glows through blossom and leaves, so their undersides stay rich instead of going dark
+    if (w > 0.0) light = max(light, vec3(0.62, 0.50, 0.54));
 }

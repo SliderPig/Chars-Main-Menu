@@ -229,6 +229,11 @@ public final class Director {
         firstCreak = secondCreak = whooshed = false;
     }
 
+    // Another screen opened some other way (a mod's button, being disconnected...): the tree is always what's behind a menu.
+    public void showTree() {
+        if (state == State.FRONT && cutAt < 0) softCut(State.TREE, null);
+    }
+
     // Any click while flying: a quick soft flash and we're there.
     public void skip() {
         if (flying() && cutAt < 0) {

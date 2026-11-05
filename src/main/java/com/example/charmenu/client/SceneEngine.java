@@ -166,7 +166,7 @@ public final class SceneEngine {
         Window window = mc.getWindow();
         float aspect = (float) window.getWidth() / Math.max(1, window.getHeight());
         Director.Cam cam = dir.camera();
-        if (data == null) {
+        if (!ready) {
             // no scene yet: look at the sky above the house
             cam.x = 0;
             cam.y = 5;
@@ -224,8 +224,9 @@ public final class SceneEngine {
             Figure.draw(data, time);
             RenderSystem.enableCull();
 
+            Paintings.draw(data.paintings);
             Petals.lanternGlow(lamps, cam, right.x, right.y, right.z, up.x, up.y, up.z, time);
-            Petals.draw(data, cam, time, high);
+            Petals.draw(cam, time, high);
         }
 
         stack.popPose();
@@ -236,11 +237,11 @@ public final class SceneEngine {
 
     private static void restoreState() {
         VertexBuffer.unbind();
+        RenderSystem.depthMask(true);
         RenderSystem.clear(GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
         RenderSystem.enableDepthTest();
         RenderSystem.depthFunc(GL11.GL_LEQUAL);
-        RenderSystem.depthMask(true);
-        RenderSystem.disableCull();
+        RenderSystem.enableCull();
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.setShaderColor(1, 1, 1, 1);

@@ -13,6 +13,7 @@ import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelLayers;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.DefaultPlayerSkin;
@@ -21,11 +22,15 @@ import net.minecraft.world.entity.LivingEntity;
 
 import java.util.UUID;
 
-// Your own skin on a real player model, fast asleep on the branch: arm under the head, one leg dangling, breathing slowly.
+// Your own skin on a real player model, fast asleep on the branch: arm under the head, one leg dangling, breathing slowly,
+// with a small black cat curled up on your chest and your other hand slowly stroking it.
 final class Figure {
-    private static final float SCALE = 1.25f;
+    private static final float SCALE = 1.35f;
+    private static final float CAT_SCALE = 0.58f;
+    private static final ResourceLocation CAT_SKIN = new ResourceLocation("textures/entity/cat/all_black.png");
 
     private static PlayerModel<LivingEntity> model;
+    private static ModelPart cat;
     private static boolean slim;
     private static ResourceLocation skin;
     private static boolean asked;
@@ -40,14 +45,11 @@ final class Figure {
         UUID id = profile.getId() != null ? profile.getId() : new UUID(0, 0);
         skin = DefaultPlayerSkin.getDefaultSkin(id);
         slim = "slim".equals(DefaultPlayerSkin.getSkinModelName(id));
-        String testSkin = System.getProperty("charmenu.testskin");
-        if (testSkin != null) return;
         // the game fetches it in the background and calls back on the main thread when the picture is ready, the default skin shows until then
         mc.getSkinManager().registerSkins(profile, (type, location, texture) -> {
             if (type == MinecraftProfileTexture.Type.SKIN) {
                 skin = location;
-                String kind = texture.getMetadata("model");
-                boolean wantSlim = "slim".equals(kind);
+                boolean wantSlim = "slim".equals(texture.getMetadata("model"));
                 if (wantSlim != slim) {
                     slim = wantSlim;
                     model = null;
@@ -64,11 +66,19 @@ final class Figure {
         return model;
     }
 
+    private static ModelPart cat() {
+        if (cat == null) cat = Minecraft.getInstance().getEntityModels().bakeLayer(ModelLayers.CAT);
+        return cat;
+    }
+
     static void draw(SceneData d, double time) {
         ask();
         PlayerModel<LivingEntity> m = model();
         float breath = (float) Math.sin(time * 1.05);
-        pose(m, breath, time);
+        // slow strokes with a little rest at each end, about one every five seconds
+        double stroke = 0.5 + 0.5 * Math.sin(time * 1.25);
+        stroke = stroke * stroke * (3 - 2 * stroke);
+        pose(m, breath, (float) stroke, time);
 
         PoseStack pose = new PoseStack();
         // lying on the back along the branch, head towards the trunk, left side towards the camera
@@ -86,9 +96,58 @@ final class Figure {
         b.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.NEW_ENTITY);
         m.renderToBuffer(pose, b, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 1, 1, 1, 1);
         BufferUploader.drawWithShader(b.end());
+
+        drawCat(pose, breath, (float) stroke, time);
     }
 
-    private static void pose(PlayerModel<LivingEntity> m, float breath, double time) {
+    // Everything in here is relative to the player model, so the cat rises and falls with the chest.
+    private static void drawCat(PoseStack pose, float breath, float stroke, double time) {
+        ModelPart c = cat();
+        float d = (float) Math.PI / 180;
+        for (String leg : new String[] {"left_hind_leg", "right_hind_leg", "left_front_leg", "right_front_leg"}) {
+            // tucked underneath, out of sight
+            c.getChild(leg).visible = false;
+        }
+        ModelPart body = c.getChild("body");
+        ModelPart head = c.getChild("head");
+        ModelPart tail1 = c.getChild("tail1");
+        ModelPart tail2 = c.getChild("tail2");
+        float catBreath = (float) Math.sin(time * 1.9);
+        body.xScale = 1 + 0.035f * catBreath;
+        body.zScale = 1 + 0.045f * catBreath;
+
+        // chin resting on the chest, leaning into the hand as it comes past
+        head.setPos(0, 15.6f, -8.2f);
+        head.setRotation((14 - 6 * stroke) * d, (30 + 5 * stroke) * d, 6 * d);
+
+        // the tail wraps round the near side of the body, and its end flicks now and then
+        float flickWhen = (float) Math.max(0, Math.sin(time * 0.43) - 0.35) / 0.65f;
+        float flick = (float) Math.sin(time * 5.1) * 26 * d * flickWhen + (float) Math.sin(time * 0.8) * 5 * d;
+        tail1.setPos(0, 14.4f, 7.5f);
+        tail1.setRotation(90 * d, -62 * d, 0);
+        tail2.setPos(-7f, 14.4f, 11.2f);
+        tail2.setRotation(90 * d, -128 * d + flick, 0);
+
+        pose.pushPose();
+        // the middle of the chest, on top of the shirt
+        float lift = 0.0035f * breath * 16;
+        pose.translate(0.02, 5.2 / 16.0, (-2.3 - lift) / 16.0 - CAT_SCALE * (15.0 / 16.0));
+        pose.mulPose(Axis.XP.rotationDegrees(90));
+        pose.mulPose(Axis.YP.rotationDegrees(180));
+        // lying a little across the chest, not straight along it
+        pose.mulPose(Axis.YP.rotationDegrees(24));
+        pose.scale(CAT_SCALE, CAT_SCALE, CAT_SCALE);
+
+        RenderSystem.setShader(() -> Shaders.figure);
+        RenderSystem.setShaderTexture(0, CAT_SKIN);
+        BufferBuilder b = Tesselator.getInstance().getBuilder();
+        b.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.NEW_ENTITY);
+        c.render(pose, b, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 1, 1, 1, 1);
+        BufferUploader.drawWithShader(b.end());
+        pose.popPose();
+    }
+
+    private static void pose(PlayerModel<LivingEntity> m, float breath, float stroke, double time) {
         m.setAllVisible(true);
         m.crouching = false;
         m.riding = false;
@@ -108,9 +167,9 @@ final class Figure {
         // right arm behind the head
         m.rightArm.setPos(-5, 2, 2.6f);
         m.rightArm.setRotation(-172 * d, 0, 18 * d);
-        // left arm lies across the belly and moves with the breath
+        // left hand rests on the cat and strokes it from the shoulders to the tail, slowly
         m.leftArm.setPos(5, 2, -0.2f - 0.06f * breath);
-        m.leftArm.setRotation(-16 * d, 0, 32 * d);
+        m.leftArm.setRotation((-38 + 7 * stroke) * d, 0, (70 - 24 * stroke) * d);
 
         // left leg dangles off the branch on the camera's side and rocks a tiny bit
         float rock = (float) Math.sin(time * 0.45) * 2.5f * d;

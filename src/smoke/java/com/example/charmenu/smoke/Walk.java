@@ -149,7 +149,7 @@ public final class Walk {
             Director.get().resetToFront();
             SceneEngine.ensure();
         });
-        later(60, () -> {});
+        later(160, () -> {});
         views("lab_");
         arrival("lab_");
         later(1, () -> {
@@ -173,7 +173,13 @@ public final class Walk {
         // real time flight with a real button press, timing frame rates
         later(60, () -> mc.setScreen(new SelectWorldScreen(mc.screen)));
         shot(40, "05_singleplayer");
-        later(5, () -> mc.setScreen(new OptionsScreen(title() == null ? new CharTitleScreen(false) : title(), mc.options)));
+        later(5, () -> net.minecraft.client.gui.screens.worldselection.CreateWorldScreen.openFresh(mc, new CharTitleScreen(false)));
+        shot(50, "05_create_game");
+        later(2, () -> pressTab(mc, 1));
+        shot(20, "05_create_world");
+        later(2, () -> pressTab(mc, 2));
+        shot(20, "05_create_more");
+        later(5, () -> mc.setScreen(new OptionsScreen(new CharTitleScreen(false), mc.options)));
         shot(30, "06_options");
         later(5, () -> mc.setScreen(new VideoSettingsScreen(mc.screen, mc.options)));
         shot(30, "07_video");
@@ -214,6 +220,16 @@ public final class Walk {
             mc.createWorldOpenFlows().createFreshLevel("charmenu-check", settings, new WorldOptions(1L, false, false), WorldPresets::createNormalWorldDimensions);
         });
         STEPS.add(new Step(5, Walk::waitForWorld));
+    }
+
+    private static void pressTab(Minecraft mc, int index) {
+        if (mc.screen == null) return;
+        for (var child : mc.screen.children()) {
+            if (child instanceof net.minecraft.client.gui.components.tabs.TabNavigationBar bar) {
+                var tabs = bar.children();
+                if (index < tabs.size()) bar.selectTab(index, false);
+            }
+        }
     }
 
     private static int worldWait;

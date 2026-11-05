@@ -31,11 +31,21 @@ public final class Glass {
     // A soft panel behind lists: a darker, quieter piece of glass so the text on it stays easy to read.
     public static void panel(GuiGraphics g, float x, float y, float w, float h, float round, float alpha) {
         draw(g, x, y, w, h, round,
-            new float[] {0.10f, 0.05f, 0.11f, 0.30f * alpha},
-            new float[] {0.08f, 0.04f, 0.09f, 0.40f * alpha},
-            new float[] {1f, 0.93f, 0.97f, 0.20f * alpha},
-            new float[] {0f, 0f, 0f, 0.10f * alpha},
+            new float[] {0.10f, 0.05f, 0.11f, 0.22f * alpha},
+            new float[] {0.08f, 0.04f, 0.09f, 0.30f * alpha},
+            new float[] {1f, 0.93f, 0.97f, 0.18f * alpha},
+            new float[] {0f, 0f, 0f, 0.08f * alpha},
             12f);
+    }
+
+    // A text box: a little darker so typing stays easy to read, brighter rim when it has the cursor.
+    public static void field(GuiGraphics g, float x, float y, float w, float h, boolean focused) {
+        draw(g, x, y, w, h, Math.min(5, h / 2),
+            new float[] {0.07f, 0.03f, 0.08f, 0.50f},
+            new float[] {0.07f, 0.03f, 0.08f, 0.42f},
+            new float[] {1f, 0.86f, 0.93f, focused ? 0.95f : 0.45f},
+            new float[] {1f, 0.6f, 0.8f, focused ? 0.28f : 0f},
+            6f);
     }
 
     public static void draw(GuiGraphics g, float x, float y, float w, float h, float round, float[] fillTop, float[] fillBottom, float[] rim, float[] glow, float glowSizePx) {

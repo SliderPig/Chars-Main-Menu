@@ -1,6 +1,7 @@
 package com.example.charmenu.client;
 
 import com.example.charmenu.CharMenu;
+import com.example.charmenu.model.Ease;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractButton;
@@ -36,6 +37,7 @@ public final class CharTitleScreen extends TitleScreen {
     private AbstractWidget copyright;
     private boolean adopted;
     private int pillsTop;
+    private float shown;
 
     public CharTitleScreen(boolean fading) {
         super(fading);
@@ -115,16 +117,16 @@ public final class CharTitleScreen extends TitleScreen {
         if (language != null) {
             AbstractWidget target = language;
             language.visible = false;
-            pills.add(addRenderableWidget(new GlassButton(sx, sy, size, size, language.getMessage(), () -> ((AbstractButton) target).onPress()).icon(Button.WIDGETS_LOCATION, 3, 109, 14, 14, 256, 256)));
+            pills.add(addRenderableWidget(new GlassButton(sx, sy, size, size, language.getMessage(), () -> pressed(target, false)).icon(Button.WIDGETS_LOCATION, 3, 109, 14, 14, 256, 256)));
             sx += size + GAP;
         }
         if (access != null) {
             AbstractWidget target = access;
             access.visible = false;
-            pills.add(addRenderableWidget(new GlassButton(sx, sy, size, size, access.getMessage(), () -> ((AbstractButton) target).onPress()).icon(Button.ACCESSIBILITY_TEXTURE, 3, 3, 14, 14, 32, 64)));
+            pills.add(addRenderableWidget(new GlassButton(sx, sy, size, size, access.getMessage(), () -> pressed(target, false)).icon(Button.ACCESSIBILITY_TEXTURE, 3, 3, 14, 14, 32, 64)));
             sx += size + GAP;
         }
-        pills.add(addRenderableWidget(new GlassButton(sx, sy, size, size, Component.translatable("charmenu.settings.open"), () -> minecraft.setScreen(new MenuSettingsScreen(this))).icon(CAT, 0, 0, 14, 14, 14, 14)));
+        pills.add(addRenderableWidget(new GlassButton(sx, sy, size, size, Component.translatable("charmenu.settings.open"), () -> flyThen(() -> minecraft.setScreen(new MenuSettingsScreen(this)))).icon(CAT, 0, 0, 14, 14, 14, 14)));
 
         // buttons from other mods stack up in the bottom right corner, whatever they are
         int ox = width - 6, oy = height - 18;
@@ -155,6 +157,11 @@ public final class CharTitleScreen extends TitleScreen {
         dir.depart(() -> ((AbstractButton) real).onPress());
     }
 
+    private void flyThen(Runnable action) {
+        Director dir = Director.get();
+        if (dir.state() == Director.State.FRONT) dir.depart(action);
+    }
+
     // Any click while the camera is flying gets you there straight away.
     @Override
     public boolean mouseClicked(double x, double y, int button) {
@@ -179,7 +186,11 @@ public final class CharTitleScreen extends TitleScreen {
             return;
         }
         Director dir = Director.get();
-        float ui = SceneEngine.ready() ? dir.titleUi() : 0;
+        // the buttons fade out quickly when a flight starts and come back gently after one ends
+        float target = SceneEngine.ready() ? dir.titleUi() : 0;
+        shown = (float) Ease.toward(shown, target, dir.frameSeconds(), target > shown ? 5 : 11);
+        if (shown < 0.004f) shown = 0;
+        float ui = shown;
         for (int i = 0; i < pills.size(); i++) {
             float own = (float) Math.max(0, Math.min(1, ui * 1.6f - i * 0.06f));
             pills.get(i).setAlpha(own * own * (3 - 2 * own));
@@ -188,13 +199,15 @@ public final class CharTitleScreen extends TitleScreen {
             drawLogo(g, ui);
             drawBranding(g, ui);
         }
-        for (AbstractWidget w : others) w.setAlpha(ui);
-        if (copyright != null) copyright.setAlpha(ui);
-        boolean clickable = ui > 0.5f;
-        for (GlassButton p : pills) p.visible = ui > 0.005f;
-        for (GlassButton p : pills) {
-            if (!clickable) p.setFocused(false);
+        for (AbstractWidget w : others) {
+            w.setAlpha(ui);
+            w.visible = ui > 0.005f;
         }
+        if (copyright != null) {
+            copyright.setAlpha(ui);
+            copyright.visible = ui > 0.005f;
+        }
+        for (GlassButton p : pills) p.visible = ui > 0.005f;
         for (Renderable r : renderables) r.render(g, mouseX, mouseY, partial);
         if (updateNotice != null && ui > 0.6f) updateNotice.render(g, mouseX, mouseY, partial);
     }

@@ -203,6 +203,21 @@ def music():
     save('music', mix / np.max(np.abs(mix)) * 0.7)
 
 
+def purr():
+    # A small cat's purr: a low rumble pulsing about 26 times a second, swelling as it breathes in and out. Loops after 8 seconds.
+    seconds = 8
+    n = seconds * SR
+    t = np.arange(n) / SR
+    noise = lowpass_noise(n, 420, 21)
+    # a whole number of pulses and breaths so the end meets the start
+    pulses = 0.5 + 0.5 * np.sin(2 * np.pi * t * 26)
+    pulses = pulses ** 2.5
+    breath = 0.55 + 0.45 * np.sin(2 * np.pi * t * 3 / seconds) ** 2
+    tone = np.sin(2 * np.pi * t * 52) * 0.5 + np.sin(2 * np.pi * t * 78) * 0.25
+    x = (noise * 0.9 + tone * 0.5) * pulses * breath
+    save('purr', x / np.max(np.abs(x)) * 0.6)
+
+
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)
     ambience()
@@ -210,3 +225,4 @@ if __name__ == '__main__':
     whoosh()
     tap()
     music()
+    purr()

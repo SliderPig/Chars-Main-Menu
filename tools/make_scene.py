@@ -514,14 +514,22 @@ def make_front():
     for a0, a1 in ((-8, -5), (4, 7)):
         window(a0, a1, 11, 13, uz1)
         glow_behind(a0, a1, 11, 13, uz1 - 2)
-    # a round-ish window high in the gable
-    S.fill(-2, 17, uz1, 1, 20, uz1, 'cherry_planks')
-    window(-1, 0, 17, 19, uz1)
-    glow_behind(-1, 0, 17, 19, uz1 - 1)
-    for x in range(-3, 3):
-        S.set(x, 16, uz1, log('cherry_log', 'x'))
-    S.set(-2, 18, uz1, log('stripped_cherry_log', 'y'))
-    S.set(1, 18, uz1, log('stripped_cherry_log', 'y'))
+    # the big gable: dark timber lines and a lit window up above the porch roof, so it isn't one flat wall
+    def plank(x, y, z):
+        return 'cherry_planks' in S.name(x, y, z)
+    for x in range(-14, 14):
+        for y in (19, 24):
+            if plank(x, y, uz1):
+                S.set(x, y, uz1, log('cherry_log', 'x'))
+    for x in (-6, -3, 2, 5):
+        for y in range(16, 25):
+            if plank(x, y, uz1):
+                S.set(x, y, uz1, log('stripped_cherry_log', 'y'))
+    window(-2, 1, 20, 23, uz1)
+    glow_behind(-2, 1, 20, 23, uz1 - 1)
+    # a lantern hanging from the peak
+    hanging_lantern(-1, 26, uz1 + 1, links=1)
+    hanging_lantern(0, 26, uz1 + 1, links=1)
 
 
 def make_back():
@@ -630,8 +638,12 @@ def make_porch():
     S.fill(px0 + 1, 8, pz0, px1 - 1, 8, pz1 - 1, 'cherry_planks')
 
 
+PAINTINGS = []
+
+
 def make_hall():
-    # Inside: long and warm, with arches that slide past as you fly through, and lanterns down the middle.
+    # Inside: long and warm. Arches slide past as you fly through, lanterns down the middle, and each bay between the arches is furnished:
+    # glowing paper screens, shelves of books and plants, real paintings in dark frames, a patterned rug down the floor.
     z0, z1 = HOUSE['z0'], HOUSE['z1']
     x0, x1 = LEFT_WALL, RIGHT_WALL
     S.fill(x0 + 1, FLOOR, z0 + 1, x1 - 1, HALL_TOP - 1, z1 - 1, 'air')
@@ -648,38 +660,99 @@ def make_hall():
                     S.set(x, y, z, log('stripped_cherry_log', 'z'))
                 else:
                     S.set(x, y, z, 'cherry_planks')
-    # ceiling and floor
+    # ceiling and floor: boards with a darker border
     S.fill(x0 + 1, HALL_TOP, z0 + 1, x1 - 1, HALL_TOP, z1 - 1, 'cherry_planks')
+    for z in range(z0 + 1, z1):
+        S.set(-1, HALL_TOP, z, log('cherry_log', 'z'))
+        S.set(0, HALL_TOP, z, log('cherry_log', 'z'))
     for x in range(x0 + 1, x1):
         for z in range(z0 + 1, z1):
             S.set(x, 1, z, 'cherry_planks' if (x in (-1, 0) or x in (-4, 3)) else 'stripped_cherry_wood')
-    S.fill(-2, FLOOR, z0 + 1, 1, FLOOR, z1 - 1, 'pink_carpet')
-    S.fill(-1, FLOOR, z0 + 1, 0, FLOOR, z1 - 1, 'magenta_carpet')
-    # arches every five blocks
+    # the rug: a pink border, deep magenta centre, a pale medallion in each bay and little stars between
+    for z in range(z0 + 1, z1):
+        bay = (z - z1) % 5
+        for x in range(-3, 3):
+            edge = x in (-3, 2)
+            centre = x in (-1, 0)
+            if edge:
+                c = 'white_carpet' if bay == 0 else 'pink_carpet'
+            elif centre and bay in (2, 3):
+                c = 'white_carpet'
+            elif centre and bay in (1, 4):
+                c = 'pink_carpet'
+            elif bay in (2, 3):
+                c = 'pink_carpet'
+            else:
+                c = 'magenta_carpet'
+            S.set(x, FLOOR, z, c)
+    # arches every five blocks: stone feet, a dark band near the top, and brackets
     for z in range(z1 - 5, z0, -5):
         for x in range(x0 + 1, x1):
             S.set(x, HALL_TOP - 1, z, log('cherry_log', 'x'))
         for x, f in ((x0 + 1, 'east'), (x1 - 1, 'west')):
-            for y in range(FLOOR, HALL_TOP - 2):
+            S.set(x, FLOOR, z, 'chiseled_stone_bricks')
+            for y in range(FLOOR + 1, HALL_TOP - 2):
                 S.set(x, y, z, log('stripped_cherry_log', 'y'))
+            S.set(x, HALL_TOP - 3, z, log('cherry_log', 'y'))
             S.set(x, HALL_TOP - 2, z, stair('cherry', f, 'top'))
             S.set(x + (1 if f == 'east' else -1), HALL_TOP - 2, z, stair('cherry', f, 'top'))
-    # lanterns down the middle and on the arches
+    # lanterns down the middle, spore blossoms hanging between them, and a small lantern at each side of the arches
     for z in range(z1 - 3, z0, -5):
         for x in (-1, 0):
             hanging_lantern(x, HALL_TOP - 1, z, links=2)
-    # paper screens with a soft light behind them along both walls
-    for z in range(z1 - 4, z0 + 1, -5):
-        for x, bx in ((x0, x0 - 1), (x1, x1 + 1)):
-            for y in range(FLOOR + 1, HALL_TOP - 2):
-                S.set(x, y, z + 1, 'white_stained_glass_pane')
-                S.set(x, y, z + 2, 'white_stained_glass_pane')
-                S.set(bx, y, z + 1, 'ochre_froglight')
-                S.set(bx, y, z + 2, 'ochre_froglight')
-    # greenery and little tables by the walls
-    for z in range(z1 - 2, z0 + 1, -5):
-        for x in (x0 + 1, x1 - 1):
-            S.set(x, FLOOR, z, 'potted_flowering_azalea_bush')
+        S.set(-3, HALL_TOP - 1, z, 'spore_blossom')
+        S.set(2, HALL_TOP - 1, z, 'spore_blossom')
+    for z in range(z1 - 5, z0, -5):
+        hanging_lantern(x0 + 3, HALL_TOP - 2, z + 1, links=1)
+        hanging_lantern(x1 - 3, HALL_TOP - 2, z + 1, links=1)
+
+    # the bays: (first z, last z) of each, and what's on each wall
+    bays = [(z1 - 4, z1 - 1), (z1 - 9, z1 - 6), (z1 - 14, z1 - 11), (z1 - 19, z1 - 16)]
+    left = ['screen', 'painting', 'shelves', 'screen']
+    right = ['screen', 'shelves', 'painting', 'screen']
+    arts = {(-1, 1): ('minecraft:bust', 2, 2), (1, 2): ('minecraft:sunset', 2, 1)}
+    for i, (za, zb) in enumerate(bays):
+        for side, kinds in ((-1, left), (1, right)):
+            kind = kinds[i]
+            wall = x0 if side < 0 else x1
+            inner = wall + (1 if side < 0 else -1)
+            if kind == 'screen':
+                window(za, zb, FLOOR + 1, HALL_TOP - 3, wall, axis='z')
+                behind = wall + (-1 if side < 0 else 1)
+                S.fill(behind, FLOOR + 1, za, behind, HALL_TOP - 3, zb, 'ochre_froglight')
+                # low planters along the foot of the screen
+                for z in range(za, zb + 1):
+                    S.set(inner, FLOOR, z, stair('cherry', 'east' if side < 0 else 'west', 'top') if z not in (za, zb) else 'potted_flowering_azalea_bush')
+                    if z not in (za, zb):
+                        S.set(inner, FLOOR + 1, z, 'flowering_azalea' if z % 2 == 0 else 'azalea')
+            elif kind == 'shelves':
+                for z in range(za, zb + 1):
+                    for y in range(FLOOR, FLOOR + 4):
+                        S.set(inner, y, z, 'bookshelf')
+                    S.set(inner, FLOOR + 4, z, slab('cherry', 'bottom'))
+                S.set(inner, FLOOR + 4, za, 'cherry_planks')
+                S.set(inner, FLOOR + 4, zb, 'cherry_planks')
+                S.set(inner, FLOOR + 5, za, 'potted_azure_bluet')
+                S.set(inner, FLOOR + 5, zb, 'potted_pink_tulip')
+                S.set(inner, FLOOR + 4, za + 1, 'pink_candle[candles=3,lit=true]')
+                S.set(inner, FLOOR + 4, za + 2, 'white_candle[candles=2,lit=true]')
+            elif kind == 'painting':
+                # a dark frame in the wall itself, and a bench under it
+                for z in range(za, zb + 1):
+                    for y in range(FLOOR + 2, FLOOR + 6):
+                        S.set(wall, y, z, log('cherry_log', 'y') if z in (za, zb) or y in (FLOOR + 2, FLOOR + 5) else 'stripped_cherry_wood')
+                plane = (wall + 1.02) if side < 0 else (wall - 0.02)
+                name, pw, ph = arts[(side, i)]
+                PAINTINGS.append((name, plane, FLOOR + 3 + (2 - ph) / 2, za + 1 + (2 - pw) / 2, pw, ph, 1 if side < 0 else -1))
+                f = 'east' if side > 0 else 'west'
+                for z in range(za, zb + 1):
+                    S.set(inner, FLOOR, z, stair('cherry', 'west' if side < 0 else 'east'))
+                S.set(inner, FLOOR, za, 'potted_azalea_bush')
+                S.set(inner, FLOOR, zb, 'potted_azalea_bush')
+    # a few petals blown in through the doors, lying on the rug
+    rnd = random.Random(55)
+    for z, x in ((-2, -2), (-3, 1), (-2, 0), (-20, 1), (-21, -2), (-19, -1), (-21, 0)):
+        S.set(x, FLOOR + 1 if False else FLOOR, z, S.name(x, FLOOR, z))
     # the two end walls inside, around the door frames (a clean look when looking down the hall)
     for z in (z1, z0):
         for x in range(x0 + 1, x1):
@@ -775,10 +848,10 @@ def limb(points, cells, knots=0.0, seed=3):
                         cells.add((ax, ay, az))
 
 
-def blossom(cx, cy, cz, rx, ry, rz, seed, shades=LEAF_SHADES, bumps=0.32, keep_out=None):
+def blossom(cx, cy, cz, rx, ry, rz, seed, shades=LEAF_SHADES, bumps=0.55, keep_out=None):
     # A cloud of cherry leaves: lumpy flat-bottomed cushion, deeper rose underneath, pale on top where the sun is.
     rnd = random.Random(seed)
-    lumps = [(cx + rnd.uniform(-rx, rx) * .8, cy + rnd.uniform(-ry, ry) * .5, cz + rnd.uniform(-rz, rz) * .8, rnd.uniform(.32, .6)) for _ in range(9)]
+    lumps = [(cx + rnd.uniform(-rx, rx) * .85, cy + rnd.uniform(-ry, ry) * .75, cz + rnd.uniform(-rz, rz) * .85, rnd.uniform(.3, .62)) for _ in range(12)]
     for x in range(int(cx - rx - 3), int(cx + rx + 4)):
         for y in range(int(cy - ry - 3), int(cy + ry + 4)):
             for z in range(int(cz - rz - 3), int(cz + rz + 4)):
@@ -801,11 +874,18 @@ def blossom(cx, cy, cz, rx, ry, rz, seed, shades=LEAF_SHADES, bumps=0.32, keep_o
                     S.set(x, y, z, 'cherry_leaves[persistent=true]', shades[i])
 
 
-def wood_from_cells(cells, bark='cherry_wood[axis=y]', light='stripped_cherry_wood[axis=y]', seed=9):
+def wood_from_cells(cells, seed=9):
     rnd = random.Random(seed)
+    pale = 'stripped_cherry_wood[axis=y]'
+    bark = 'cherry_wood[axis=y]'
     for (x, y, z) in cells:
-        n = sfbm((x + y * .6) / 3.3, (z - y * .4) / 3.3, 2, seed)
-        S.set(x, y, z, light if n + rnd.uniform(-.1, .1) > 0.28 else bark)
+        n = sfbm(x / 5.5 + y * .15, (y * 1.1 + z * .9) / 2.3, 2, seed) + rnd.uniform(-.14, .14)
+        if n < -.17:
+            S.set(x, y, z, bark)
+        elif n < .1:
+            S.set(x, y, z, pale, 'E0C9CC')
+        else:
+            S.set(x, y, z, pale, 'F4E2E2')
 
 
 SLEEPER = dict(x=6.3, y=0.0, z=TREE_Z + 2.5, yaw=0.0)
@@ -864,6 +944,11 @@ def make_big_tree():
     SLEEPER['y'] = float(bed_y)
     SLEEPER['z'] = z + 3.55
     wood_from_cells(cells)
+    rnd = random.Random(21)
+    for x in range(bed0, bed1 + 1):
+        for dz in (int(z) + 1, int(z) + 2):
+            if rnd.random() < .7:
+                S.set(x, bed_y, dz, f'pink_petals[flower_amount={rnd.randint(1, 3)},facing={rnd.choice(["north", "south", "east", "west"])}]')
 
     keep = lambda x, y, zz: (-3 <= x <= 13 and 15 <= y <= 23 and z - 3 <= zz <= z + 10)  # clear air round the sleeper
     clouds = [
@@ -1017,16 +1102,16 @@ def make_plants():
             if S.grid[i, yy, k] != NAME_GRASS or S.grid[i, yy + 1, k] != 0:
                 continue
             d = dist_to_flight(x, z)
-            keep = 1.0 if d < 42 else .55 if d < 70 else .26
+            keep = 1.0 if d < 30 else .5 if d < 55 else .16
             if rnd.random() > keep:
                 continue
             f = sfbm(x / 11.0, z / 11.0, 2, 61)    # where the flower drifts are
             p = sfbm(x / 7.0, z / 7.0, 2, 62)  # where the petals lie
-            under_tree = math.hypot((x - 8) / 44, (z - TREE_Z) / 24) < 1
+            under_tree = math.hypot((x - 8) / 40, (z - TREE_Z - 2) / 22) < 1
             r = rnd.random()
             # petals on the ground under the tree and in pink drifts along the yard
-            if (under_tree and r < .55) or (p > .28 and r < .5):
-                amount = rnd.randint(1, 4)
+            if (under_tree and r < .3) or (p > .3 and r < .28):
+                amount = rnd.choice((1, 1, 2, 2, 3, 4))
                 S.set(x, top + 1, z, f'pink_petals[flower_amount={amount},facing={rnd.choice(["north", "south", "east", "west"])}]')
                 continue
             if f > .2 and r < .34:
@@ -1111,12 +1196,12 @@ def far_height(x, z):
     far = ss(240.0, 1100.0, r)
     n = fbm(x / 260.0, z / 260.0, 5, 71)
     ridged = 1 - np.abs(fbm(x / 520.0, z / 520.0, 5, 72))
-    h = h + far * (40 * n + 170 * ridged * ridged)
+    h = h + far * (40 * n + 110 * ridged * ridged)
     # forest hills in the middle distance
     mid = ss(190.0, 520.0, r) * (1 - ss(800.0, 1300.0, r))
     h = h + mid * (46 * np.abs(fbm(x / 120.0, z / 120.0, 4, 73)))
     # the great peak on the left of the view from the tree, and its neighbours
-    for px, pz, ph, w in ((-610, -1120, 520, 150), (-760, -1020, 330, 130), (-430, -1240, 300, 120), (240, -1380, 400, 220), (640, -1180, 300, 190), (-1200, -640, 330, 260), (1200, -540, 300, 260)):
+    for px, pz, ph, w in ((-610, -1120, 300, 150), (-760, -1020, 190, 130), (-430, -1240, 170, 120), (240, -1380, 210, 220), (640, -1180, 170, 190), (-1200, -640, 200, 260), (1200, -540, 180, 260)):
         d = np.sqrt((x - px) ** 2 + (z - pz) ** 2)
         lump = ph * np.exp(-(d / w) ** 1.5)
         h = h + lump * (1 + .28 * fbm(x / 60.0, z / 60.0, 3, 74))
@@ -1127,21 +1212,17 @@ def far_colour(x, z, h, slope):
     # Returns rgb 0..1 for a column: meadow greens, darker forest, cherry groves dotted in pink, rock high up and on steep sides.
     g = np.array([.46, .63, .27])
     forest = np.array([.20, .38, .17])
-    rock = np.array([.46, .47, .50])
-    snow = np.array([.92, .94, .97])
+    rock = np.array([.40, .46, .52])
     n = sfbm(x / 130.0, z / 130.0, 3, 81)
     speck = snoise(x / 19.0, z / 19.0, 82)
     c = g * (.95 + .2 * n)
     if n > -.15:
         c = forest * (1 + .3 * speck)
     if speck > .32 and n < .3 and h < 60:
-        c = np.array([.97, .68, .78])
-    if slope > 1.0 or h > 190:
-        t = min(1.0, max(0.0, (max(slope - 1.0, (h - 190) / 70)) * .8))
+        c = np.array([.86, .62, .70])
+    if slope > 1.2 or h > 230:
+        t = min(.8, max(0.0, (max(slope - 1.2, (h - 230) / 90)) * .7))
         c = c * (1 - t) + rock * t
-    if h > 390:
-        t = min(1.0, (h - 390) / 60)
-        c = c * (1 - t) + snow * t
     return c
 
 
@@ -1232,13 +1313,15 @@ def make_meta():
     for (cx, cy, cz, hinge, px, pz, turn, group) in DOORS:
         lines.append(f'door {group} {cx} {cy} {cz} {hinge} {px:.4f} {pz:.4f} {turn}')
     lines.append(f'sleeper {SLEEPER["x"]:.3f} {SLEEPER["y"]:.3f} {SLEEPER["z"]:.3f}')
+    for name, x, y, z, w, h, facing in PAINTINGS:
+        lines.append(f'painting {name} {x:.3f} {y:.3f} {z:.3f} {w} {h} {facing}')
     # house box: no petals fall inside it
     lines.append(f'indoors {HOUSE["x0"]} 0 {HOUSE["z0"]} {HOUSE["x1"] + 1} 26 {HOUSE["z1"] + 1}')
     eye = FLOOR + 1.42
     # camera keys: x y z, look x y z, field of view
     front = (-2.5, 5.0, 43.0, -8.0, 9.8, -6.0, 56.0)
     lines.append('front ' + ' '.join(f'{v:.2f}' for v in front))
-    tree = (2.0, 8.4, TREE_Z + 27.0, 5.0, 15.2, TREE_Z, 54.0)
+    tree = (12.4, 19.6, TREE_Z + 18.0, 12.4, 16.9, TREE_Z + 2.0, 50.0)
     lines.append('tree ' + ' '.join(f'{v:.2f}' for v in tree))
     fly_out = [
         (-1.6, 4.6, 30.0, -2.0, 6.4, -6.0, 57.0),
@@ -1248,11 +1331,13 @@ def make_meta():
         (0.0, eye, -12.0, 0.0, eye, -36.0, 72.0),
         (0.0, eye, -24.0, 0.0, eye + 1.0, -50.0, 72.0),
         (-3.0, eye + 1.0, -31.0, 3.0, eye + 6.0, -62.0, 68.0),
-        (-12.0, 7.0, -39.0, 6.0, 14.0, -66.0, 62.0),
+        (-13.0, 8.5, -38.0, 6.0, 15.0, -64.0, 62.0),
+        (-3.0, 15.0, -45.0, 11.0, 16.5, -62.0, 55.0),
     ]
     for k in fly_out:
         lines.append('flyout ' + ' '.join(f'{v:.2f}' for v in k))
     fly_back = [
+        (-2.0, 14.0, -44.0, -6.0, 10.0, -26.0, 56.0),
         (-13.0, 7.2, -38.0, -2.0, 6.0, -22.0, 62.0),
         (-5.0, eye + 1.0, -32.0, 0.0, eye, -10.0, 66.0),
         (0.0, eye, -25.0, 0.0, eye, 0.0, 72.0),

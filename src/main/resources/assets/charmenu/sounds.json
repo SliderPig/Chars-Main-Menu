@@ -1,6 +1,7 @@
 {
   "menu.ambience": { "sounds": [{ "name": "charmenu:ambience", "stream": true }] },
   "menu.music": { "sounds": [{ "name": "charmenu:music", "stream": true }] },
+  "menu.purr": { "sounds": [{ "name": "charmenu:purr", "stream": true }] },
   "menu.door": { "sounds": [{ "name": "charmenu:door" }] },
   "menu.whoosh": { "sounds": [{ "name": "charmenu:whoosh" }] },
   "menu.tap": { "sounds": [{ "name": "charmenu:tap" }] }

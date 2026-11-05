@@ -8,6 +8,7 @@ import net.minecraft.client.gui.screens.LevelLoadingScreen;
 import net.minecraft.client.gui.screens.ProgressScreen;
 import net.minecraft.client.gui.screens.ReceivingLevelScreen;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.TitleScreen;
 
 // What the small patches into vanilla screens call. Every one of these answers "no, carry on as normal" straight away while a world is loaded.
 public final class MenuHooks {
@@ -33,7 +34,8 @@ public final class MenuHooks {
         if (!SceneEngine.ready() && isPassing(screen)) return false;
         if (drawnOn == frame) return true;
         drawnOn = frame;
-        return drawScene(g, 0.10f);
+        if (!(screen instanceof TitleScreen) && SceneEngine.ready()) Director.get().showTree();
+        return drawScene(g, 0.06f);
     }
 
     public static boolean drawScene(GuiGraphics g, float darken) {
