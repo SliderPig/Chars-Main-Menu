@@ -2,6 +2,7 @@ package com.example.charmenu.mixin;
 
 import com.example.charmenu.client.Glass;
 import com.example.charmenu.client.MenuHooks;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractSelectionList;
 import org.spongepowered.asm.mixin.Mixin;
@@ -38,6 +39,9 @@ abstract class AbstractSelectionListMixin {
     @Inject(method = "render", at = @At("HEAD"), require = 0)
     private void charmenu$seeThrough(GuiGraphics g, int mouseX, int mouseY, float partial, CallbackInfo ci) {
         if (!MenuHooks.active()) return;
+        // some screens (Select World) never draw a background of their own and lean on the list's dirt to cover the screen:
+        // with the dirt gone, the scene has to be drawn here or old frames would pile up underneath
+        MenuHooks.background(g, Minecraft.getInstance().screen);
         setRenderBackground(false);
         setRenderTopAndBottom(false);
         float cx = (x0 + x1) / 2f;

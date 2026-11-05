@@ -29,7 +29,7 @@ public final class MenuHooks {
 
     // A screen wants its dirt background: give it the scene instead. Returns false to let vanilla draw its dirt.
     public static boolean background(GuiGraphics g, Screen screen) {
-        if (!active()) return false;
+        if (!active() || screen == null) return false;
         // saving or loading a world: don't start building a whole scene for a screen that's about to vanish
         if (!SceneEngine.ready() && isPassing(screen)) return false;
         if (drawnOn == frame) return true;
