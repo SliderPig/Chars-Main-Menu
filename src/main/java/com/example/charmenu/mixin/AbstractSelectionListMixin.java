@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 // Scrolling lists with no world loaded: no dirt panel and no dirt bars, just a quiet rounded piece of glass so the text stays readable.
@@ -51,5 +52,20 @@ abstract class AbstractSelectionListMixin {
         float left = x0 + (width - rowWidth) / 2f;
         Glass.pill(g, left, top - 2, rowWidth, rowHeight + 4, 0.7f, 0.8f, true);
         ci.cancel();
+    }
+
+    @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;fill(IIIII)V"), require = 0)
+    private void charmenu$scrollBar(GuiGraphics g, int ax, int ay, int bx, int by, int colour) {
+        if (!MenuHooks.active()) {
+            g.fill(ax, ay, bx, by, colour);
+            return;
+        }
+        // vanilla draws a black strip, then the handle twice in two greys: only the first grey becomes the pill
+        if (colour == 0xFF808080) {
+            float w = bx - ax - 1;
+            Glass.draw(g, ax + 0.5f, ay, w, by - ay, w / 2,
+                new float[] {1f, 0.86f, 0.93f, 0.7f}, new float[] {1f, 0.78f, 0.88f, 0.6f},
+                new float[] {1f, 1f, 1f, 0.5f}, new float[] {0f, 0f, 0f, 0f}, 3f);
+        }
     }
 }

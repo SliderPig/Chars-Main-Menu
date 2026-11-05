@@ -875,7 +875,7 @@ def wood_from_cells(cells, seed=9):
     bark = 'cherry_wood[axis=y]'
     for (x, y, z) in cells:
         n = sfbm(x / 5.5 + y * .15, (y * 1.1 + z * .9) / 2.3, 2, seed) + rnd.uniform(-.14, .14)
-        if n < -.17:
+        if n < -.3:
             S.set(x, y, z, bark)
         elif n < .1:
             S.set(x, y, z, pale, 'E0C9CC')
@@ -924,6 +924,12 @@ def make_big_tree():
     limb(X([(-13, 14.2, z + 1.8, .65), (-15, 12, z + 2.4, .5), (-16, 10.5, z + 2.6, .45)]), cells, seed=16)
     limb(X([(15, 17, z + 2, .75), (17.5, 13.5, z + 2.6, .55), (18, 11.5, z + 3, .45)]), cells, seed=17)
 
+    # twigs carrying blossom just behind the limb, right behind where the sleeper lies
+    limb(X([(-8, 14, z + 2, .6), (-8, 17.5, z - 2, .5), (-8, 18.5, z - 5, .45)]), cells, seed=18)
+    limb(X([(1, 14, z + 2, .6), (1.5, 18, z - 2.5, .5), (1.5, 19.5, z - 5.5, .45)]), cells, seed=19)
+    limb(X([(11, 16, z + 2, .6), (11, 19, z - 2, .5), (11, 20.5, z - 5, .45)]), cells, seed=20)
+    limb(X([(-6, 14.4, z + 3, .55), (-7, 17.5, z + 5, .45), (-7.5, 20, z + 6.5, .45)]), cells, seed=22)
+
     # a good flat bed on top of the limb where the sleeper lies
     bed_y = 16
     bed0, bed1 = 1, 9
@@ -941,17 +947,19 @@ def make_big_tree():
     wood_from_cells(cells)
     rnd = random.Random(21)
     for x in range(bed0, bed1 + 1):
-        for dz in (int(z) + 1, int(z) + 2):
-            if rnd.random() < .7:
-                S.set(x, bed_y, dz, f'pink_petals[flower_amount={rnd.randint(1, 3)},facing={rnd.choice(["north", "south", "east", "west"])}]')
+        for dz in (int(z) + 1,):
+            if rnd.random() < .4:
+                S.set(x, bed_y, dz, f'pink_petals[flower_amount={rnd.randint(1, 2)},facing={rnd.choice(["north", "south", "east", "west"])}]')
 
-    keep = lambda x, y, zz: (-3 <= x <= 13 and 15 <= y <= 23 and z - 3 <= zz <= z + 10)  # clear air round the sleeper
+    keep = lambda x, y, zz: (-3 <= x <= 13 and 15 <= y <= 24 and z - 3 <= zz <= z + 12)  # clear air round the sleeper
     clouds = [
         (18, 33.5, z - 3, 10, 4.2, 8), (3, 29.8, z - 1, 8.5, 3.6, 6.5), (-13, 26.2, z, 7.5, 3.4, 6), (-33, 22, z + .5, 8.5, 4.8, 6.5),
         (46, 31, z - 2.5, 9, 4.6, 7), (56, 26.5, z - 2, 5, 4.4, 4.5), (31, 27, z - 8.5, 6.5, 3.4, 5), (13, 25.4, z + 11, 5, 2.6, 4),
         (4.5, 25.2, z - 9.5, 6, 3, 4.5), (-23, 24.4, z + 1, 5, 2.6, 4.2),
         # low ones under the limb
         (-3, 8.6, z + 3, 4.2, 2.4, 3.2), (-16, 10.8, z + 3, 4.6, 2.6, 3.6), (18, 10.6, z + 3.2, 3.6, 2.2, 3),
+        # right behind the sleeper, and one nearer the camera in the top corner of the view
+        (-8, 19.4, z - 6, 5, 2.6, 3.5), (1.5, 20.4, z - 7, 5.5, 2.8, 4), (11, 21.2, z - 6, 4.5, 2.6, 3.5), (-8, 21.2, z + 7, 3.6, 2, 3),
     ]
     for i, (cx, cy, cz, rx, ry, rz) in enumerate(clouds):
         blossom(cx * k, cy, cz, rx * k, ry, rz, 100 + i, keep_out=keep)
@@ -1203,7 +1211,7 @@ def far_height(x, z):
     return h
 
 
-def far_colour(x, z, h, slope):
+def far_colour(x, z, h, slope, size=8):
     # Returns rgb 0..1 for a column: meadow greens, darker forest, cherry groves dotted in pink, rock high up and on steep sides.
     g = np.array([.46, .63, .27])
     forest = np.array([.20, .38, .17])
@@ -1213,7 +1221,7 @@ def far_colour(x, z, h, slope):
     c = g * (.95 + .2 * n)
     if n > -.15:
         c = forest * (1 + .3 * speck)
-    if speck > .32 and n < .3 and h < 60:
+    if size >= 48 and speck > .32 and n < .3 and h < 60:
         c = np.array([.86, .62, .70])
     if slope > 1.2 or h > 230:
         t = min(.8, max(0.0, (max(slope - 1.2, (h - 230) / 90)) * .7))
@@ -1257,7 +1265,7 @@ def make_far():
                 y = float(h[i, k])
                 nb = [h[i + 1, k] if i + 1 < len(xs) else y - 200, h[i - 1, k] if i > 0 else y - 200, h[i, k + 1] if k + 1 < len(zs) else y - 200, h[i, k - 1] if k > 0 else y - 200]
                 slope = max(abs(y - float(v)) for v in nb[:4] if v > y - 150) / size if any(v > y - 150 for v in nb) else 0
-                col = far_colour(x, z, y, slope)
+                col = far_colour(x, z, y, slope, size)
                 x1, z1 = x + size, z + size
                 add((x, y, z), (x, y, z1), (x1, y, z1), (x1, y, z), np.array([0, 1, 0]), col)
                 side = col * .86 if size < 48 else col * .92
@@ -1316,7 +1324,7 @@ def make_meta():
     # camera keys: x y z, look x y z, field of view
     front = (-2.5, 5.0, 43.0, -8.0, 9.8, -6.0, 56.0)
     lines.append('front ' + ' '.join(f'{v:.2f}' for v in front))
-    tree = (13.4, 19.6, TREE_Z + 18.0, 13.4, 16.9, TREE_Z + 2.0, 50.0)
+    tree = (0.9, 20.2, TREE_Z + 14.55, 0.9, 16.4, TREE_Z + 3.55, 46.0)
     lines.append('tree ' + ' '.join(f'{v:.2f}' for v in tree))
     fly_out = [
         (-1.6, 4.6, 30.0, -2.0, 6.4, -6.0, 57.0),
@@ -1327,7 +1335,7 @@ def make_meta():
         (0.0, eye, -24.0, 0.0, eye + 1.0, -50.0, 72.0),
         (-3.0, eye + 1.0, -31.0, 3.0, eye + 6.0, -62.0, 68.0),
         (-13.0, 8.5, -38.0, 6.0, 15.0, -64.0, 62.0),
-        (-3.0, 15.0, -45.0, 11.0, 16.5, -62.0, 55.0),
+        (-6.0, 15.5, -46.0, 6.0, 16.0, -62.0, 54.0),
     ]
     for k in fly_out:
         lines.append('flyout ' + ' '.join(f'{v:.2f}' for v in k))

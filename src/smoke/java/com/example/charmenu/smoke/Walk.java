@@ -225,10 +225,9 @@ public final class Walk {
 
     private static void pressTab(Minecraft mc, int index) {
         if (mc.screen == null) return;
-        for (var child : mc.screen.children()) {
+        for (var child : java.util.List.copyOf(mc.screen.children())) {
             if (child instanceof net.minecraft.client.gui.components.tabs.TabNavigationBar bar) {
-                var tabs = bar.children();
-                if (index < tabs.size()) bar.selectTab(index, false);
+                if (index < bar.children().size()) bar.selectTab(index, false);
             }
         }
     }

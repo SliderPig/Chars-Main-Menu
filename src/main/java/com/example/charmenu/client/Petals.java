@@ -61,7 +61,7 @@ final class Petals {
             float fade = 1 - edge * edge * edge * edge;
             // right against the camera they would flash past as big blurs
             float close = x * x + y * y + z * z;
-            if (close < 1.2f) fade *= close / 1.2f;
+            if (close < 5f) fade *= close / 5f;
             petal(b, cx + x, cy + y, cz + z, s, time, fade);
         }
         for (int i = 0; i < tree; i++) {

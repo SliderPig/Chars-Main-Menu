@@ -129,7 +129,7 @@ public final class Director {
             case TREE -> {
                 frontDoor = 1;
                 backDoor = 1;
-                rest(data.tree, now - stateStart, 0.55);
+                rest(data.tree, now - stateStart, 0.3);
             }
             case FLYING_OUT, FLYING_BACK -> fly();
         }
