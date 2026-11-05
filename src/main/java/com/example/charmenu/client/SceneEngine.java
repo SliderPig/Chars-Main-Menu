@@ -34,6 +34,7 @@ public final class SceneEngine {
 
     private static boolean failed;
     private static Thread worker;
+    private static volatile boolean working;
     private static volatile MeshBuilder.Result built;
     private static volatile Throwable workerError;
     private static ArrayDeque<MeshBuilder.Part> toUpload;
@@ -73,7 +74,8 @@ public final class SceneEngine {
 
     // Starts the background work if nothing is built yet. Cheap to call every frame.
     public static void ensure() {
-        if (ready || failed || toUpload != null || worker != null || built != null) return;
+        if (ready || failed || toUpload != null || working || built != null) return;
+        working = true;
         worker = new Thread(() -> {
             try {
                 long t0 = System.nanoTime();
@@ -81,9 +83,12 @@ public final class SceneEngine {
                 long t1 = System.nanoTime();
                 MeshBuilder.Result r = MeshBuilder.build(d);
                 CharMenu.LOG.info("Menu scene ready: load+light {} ms, meshes {} ms, {} quads, {} parts", (t1 - t0) / 1_000_000, (System.nanoTime() - t1) / 1_000_000, r.quads, r.parts.size());
-                built = r;
+                // a world may have loaded in the meantime: then it's not wanted any more
+                if (Minecraft.getInstance().level == null) built = r;
             } catch (Throwable t) {
                 workerError = t;
+            } finally {
+                working = false;
             }
         }, "charmenu-scene");
         worker.setDaemon(true);
@@ -95,14 +100,12 @@ public final class SceneEngine {
         Throwable err = workerError;
         if (err != null) {
             workerError = null;
-            worker = null;
             fail(err);
             return;
         }
         MeshBuilder.Result r = built;
         if (r != null && toUpload == null) {
             built = null;
-            worker = null;
             data = r.data;
             lamps = r.lamps;
             toUpload = new ArrayDeque<>(r.parts);

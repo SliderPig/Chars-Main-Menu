@@ -32,7 +32,7 @@ def base_colour(name):
     return c
 
 
-def render(cam, look, fov, w=800, h=450, path='out.png'):
+def render(cam, look, fov, w=800, h=450, path='out.png', zmax=9999):
     # Every exposed block drawn as a square, far ones first, shaded by which way is up and open to the sun.
     grid = ms.S.grid
     solid = grid != 0
@@ -46,6 +46,7 @@ def render(cam, look, fov, w=800, h=450, path='out.png'):
     ex &= solid
     xs, ys, zs = np.nonzero(ex)
     pos = np.stack([xs + ms.X0 + .5, ys + ms.Y0 + .5, zs + ms.Z0 + .5], axis=1)
+    near_ok = pos[:, 2] < zmax
     pal = np.zeros((len(ms.S.palette), 3))
     for i, n in enumerate(ms.S.palette):
         c = base_colour(n)
@@ -64,7 +65,7 @@ def render(cam, look, fov, w=800, h=450, path='out.png'):
     up = np.cross(right, fw)
     rel = pos - cam
     dz = rel @ fw
-    keep = dz > .5
+    keep = (dz > .5) & near_ok
     rel, dz, col = rel[keep], dz[keep], col[keep]
     f = (h / 2) / np.tan(np.radians(fov / 2))
     sx = (rel @ right) * f / dz + w / 2
@@ -88,8 +89,14 @@ def render(cam, look, fov, w=800, h=450, path='out.png'):
 if __name__ == '__main__':
     out = real_argv[1] if len(real_argv) > 1 else '.'
     os.makedirs(out, exist_ok=True)
-    ms.main()
-    render((-7.5, 4.6, 45), (-5.5, 9.6, -6), 56, path=os.path.join(out, 'front.png'))
-    render((2, 8.4, ms.TREE_Z + 27), (5, 15.2, ms.TREE_Z), 54, path=os.path.join(out, 'tree.png'))
-    render((-2, 22, ms.TREE_Z + 52), (2, 16, ms.TREE_Z), 54, path=os.path.join(out, 'tree_far.png'))
-    render((-60, 40, 60), (0, 6, -20), 50, path=os.path.join(out, 'high.png'))
+    ms.make_land()
+    ms.make_house()
+    ms.make_yard()
+    ms.make_big_tree()
+    ms.make_other_trees()
+    ms.make_plants()
+    ms.join_up()
+    render((-2.5, 5, 42), (-8, 9.5, -6), 56, w=1000, h=562, path=os.path.join(out, 'front.png'))
+    render((2, 8.4, ms.TREE_Z + 27), (5, 15.2, ms.TREE_Z), 54, w=1000, h=562, path=os.path.join(out, 'tree.png'))
+    render((6, 13, ms.TREE_Z + 62), (6, 15, ms.TREE_Z), 54, w=1000, h=562, path=os.path.join(out, 'tree_far.png'), zmax=-26)
+    render((-60, 40, 60), (0, 6, -20), 50, w=1000, h=562, path=os.path.join(out, 'high.png'))

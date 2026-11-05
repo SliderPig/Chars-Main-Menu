@@ -80,8 +80,38 @@ def fbm(x, z, octaves=3, seed=1):
     return v / tot
 
 
-def noise3(x, y, z, seed=5):
-    return float(fbm(np.array(x + y * 0.37), np.array(z - y * 0.61), 2, seed))
+_lists = {}
+
+
+def snoise(x, z, seed=1):
+    # The same noise for one point at a time, much quicker than going through numpy.
+    t = _lists.get(seed)
+    if t is None:
+        t = _table(seed).tolist()
+        _lists[seed] = t
+    xi = math.floor(x)
+    zi = math.floor(z)
+    fx = x - xi
+    fz = z - zi
+    fx = fx * fx * (3 - 2 * fx)
+    fz = fz * fz * (3 - 2 * fz)
+    xa, xb, za, zb = xi & 255, (xi + 1) & 255, zi & 255, (zi + 1) & 255
+    top = t[xa][za] * (1 - fx) + t[xb][za] * fx
+    bot = t[xa][zb] * (1 - fx) + t[xb][zb] * fx
+    return top * (1 - fz) + bot * fz
+
+
+def sfbm(x, z, octaves=3, seed=1):
+    v = 0.0
+    amp = 1.0
+    tot = 0.0
+    f = 1.0
+    for i in range(octaves):
+        v += amp * snoise(x * f + i * 17.3, z * f - i * 9.1, seed + i)
+        tot += amp
+        amp *= 0.5
+        f *= 2.03
+    return v / tot
 
 
 # ------------------------------------------------------------------ the land
@@ -99,7 +129,7 @@ def land_height(x, z):
     back = ss(112.0, 300.0, -z)
     h = h - back * 26.0
     # a low mound under the tree
-    m = np.exp(-(((x - 27.0) / 26.0) ** 2 + ((z - TREE_Z) / 21.0) ** 2))
+    m = np.exp(-(((x - 34.0) / 26.0) ** 2 + ((z - TREE_Z) / 21.0) ** 2))
     h = h + 3.2 * m
     # flat pad for the house, its yard and the path
     dx = np.maximum(np.abs(x + 0.5) - 27.0, 0)
@@ -693,7 +723,7 @@ def make_yard():
             r = rnd.random()
             S.set(x, y, z, 'moss_block' if r < 0.5 else 'coarse_dirt' if r < 0.7 else 'grass_block')
     # hedges along the path, with gaps
-    for z in range(z_porch + 2, 60):
+    for z in range(z_porch + 2, 34):
         for x in (-8, 7):
             if (z - z_porch) % 12 >= 10:
                 continue
@@ -701,7 +731,7 @@ def make_yard():
             for dx in (0, -1 if x < 0 else 1):
                 S.set(x + dx, y + 1, z, 'azalea_leaves[persistent=true]' if rnd.random() < .7 else 'flowering_azalea_leaves[persistent=true]')
     # stone lanterns in pairs
-    for z in (z_porch + 5, z_porch + 17, z_porch + 29, z_porch + 41):
+    for z in (z_porch + 5, z_porch + 17):
         stone_lantern(-6, z)
         stone_lantern(5, z)
     # hedges tight to the house
@@ -754,7 +784,7 @@ def blossom(cx, cy, cz, rx, ry, rz, seed, shades=LEAF_SHADES, bumps=0.32, keep_o
             for z in range(int(cz - rz - 3), int(cz + rz + 4)):
                 dx, dy, dz = (x + .5 - cx) / rx, (y + .5 - cy) / ry, (z + .5 - cz) / rz
                 d = dx * dx + dy * dy * (1.5 if dy < 0 else 1.0) + dz * dz
-                n = float(fbm(np.array((x + y * .5) / 4.3), np.array((z - y * .7) / 4.3), 2, seed % 50 + 30))
+                n = sfbm((x + y * .5) / 4.3, (z - y * .7) / 4.3, 2, seed % 50 + 30)
                 d += n * bumps
                 for lx, ly, lz, lr in lumps:
                     ldx, ldy, ldz = (x + .5 - lx) / (rx * lr), (y + .5 - ly) / (ry * lr), (z + .5 - lz) / (rz * lr)
@@ -774,7 +804,7 @@ def blossom(cx, cy, cz, rx, ry, rz, seed, shades=LEAF_SHADES, bumps=0.32, keep_o
 def wood_from_cells(cells, bark='cherry_wood[axis=y]', light='stripped_cherry_wood[axis=y]', seed=9):
     rnd = random.Random(seed)
     for (x, y, z) in cells:
-        n = float(fbm(np.array((x + y * .6) / 3.3), np.array((z - y * .4) / 3.3), 2, seed))
+        n = sfbm((x + y * .6) / 3.3, (z - y * .4) / 3.3, 2, seed)
         S.set(x, y, z, light if n + rnd.uniform(-.1, .1) > 0.28 else bark)
 
 
@@ -782,61 +812,76 @@ SLEEPER = dict(x=6.3, y=0.0, z=TREE_Z + 2.5, yaw=0.0)
 
 
 def make_big_tree():
+    # Shaped after the picture: a thick trunk rising from rocks on the right, arching over, then one long limb reaching left, dipping level in the middle
+    # (where the sleeper lies) and lifting again at its tip. Blossom sits in separate cushions above it with sky showing between them, and a few low ones hang below.
     z = TREE_Z
+    k = .88  # squeezes the whole tree sideways a little so it fits the view with the sleeper still big enough
+
+    def X(pts):
+        return [(p[0] * k, p[1], p[2], p[3]) for p in pts]
+
     trunk = [
-        (29, -3, z, 7.2), (30.5, 2.5, z, 6.0), (30.5, 7.5, z + .5, 4.9), (28, 12, z + .5, 4.0),
-        (22.5, 15.2, z + 1, 3.3), (15.5, 16.2, z + 2, 2.7), (8.5, 15.6, z + 2.5, 2.35), (1, 15.3, z + 2.5, 1.95),
-        (-7, 16, z + 2, 1.5), (-15, 17.8, z + 1.5, 1.1), (-23, 20.5, z + 1, .8), (-30, 24, z + .5, .55),
+        (37, -5, z, 8.0), (39, 3, z, 6.5), (39, 9, z + .5, 5.2), (36, 15, z + .5, 4.3), (30, 19.5, z + 1, 3.6),
+        (22.5, 20.8, z + 1.5, 3.1), (15.5, 18.2, z + 2, 2.65), (9, 15.2, z + 2.5, 2.35), (3, 13.8, z + 2.5, 2.1), (-4, 13.4, z + 2.5, 1.8),
+        (-11, 14, z + 2, 1.45), (-18, 15.6, z + 1.5, 1.1), (-25, 18.3, z + 1, .8), (-32, 21.8, z + .5, .55),
     ]
     cells = set()
-    limb(trunk, cells, knots=.16, seed=2)
+    limb(X(trunk), cells, knots=.17, seed=2)
     # roots flare out across the rocks
-    limb([(27, 2, z - 1, 3.2), (20, -1, z + 2, 2.1), (14, -2, z + 3, 1.2)], cells, knots=.2, seed=3)
-    limb([(33, 3, z + 3, 3.2), (37, 0, z + 8, 2.2), (41, -2, z + 12, 1.1)], cells, knots=.2, seed=4)
-    limb([(32, 2, z - 4, 3.0), (37, -1, z - 9, 2.0), (42, -3, z - 12, 1.0)], cells, knots=.2, seed=5)
-    limb([(26, 2, z + 4, 3.0), (22, -1, z + 9, 2.0), (18, -3, z + 12, 1.0)], cells, knots=.2, seed=6)
-    # big branch up and to the right, from the shoulder of the trunk
-    limb([(29, 11, z, 2.8), (33, 16, z - .5, 2.1), (37, 21, z - 1.5, 1.4), (41, 25, z - 2, .9), (45, 28, z - 2, .55)], cells, knots=.15, seed=7)
-    # branches rising off the long limb
-    limb([(22, 15.5, z + 1, 1.7), (19.5, 20, z, 1.3), (16.5, 25, z - 1.5, .9), (12.5, 29, z - 3, .55)], cells, knots=.15, seed=8)
-    limb([(11, 16, z + 2.2, 1.1), (9, 20, z + 3, .8), (5.5, 25, z + 2, .6), (2, 28, z + 1, .45)], cells, seed=9)
-    limb([(-2, 15.6, z + 2.4, 1.0), (-5, 20, z + 2, .75), (-8.5, 24.5, z + 1, .55), (-12, 27, z, .45)], cells, seed=10)
-    limb([(-12, 17.2, z + 1.7, .8), (-16, 21, z + .5, .6), (-20, 24.5, z, .45)], cells, seed=11)
-    limb([(16, 16.3, z + 1.8, 1.0), (15, 19, z + 6, .7), (12, 22, z + 9, .5)], cells, seed=12)
-    limb([(4, 15.6, z + 2.4, .85), (3.5, 19, z - 3, .6), (1, 23, z - 7, .45)], cells, seed=13)
-    limb([(25, 14.5, z + .5, 1.2), (24, 20, z - 4, .85), (21, 24, z - 8, .5)], cells, seed=14)
-    # twigs that hang down under the limb, carrying low blossom either side of the sleeper
-    limb([(-1, 15, z + 2.4, .7), (-4, 12.5, z + 2.8, .5), (-7, 10.5, z + 3, .45)], cells, seed=15)
-    limb([(-16, 17.5, z + 1.5, .55), (-19, 15, z + 2, .45), (-21, 13, z + 2, .45)], cells, seed=16)
-    limb([(16, 15, z + 2, .7), (18.5, 12.2, z + 2.6, .5), (19, 10, z + 3, .45)], cells, seed=17)
+    limb(X([(34, 1, z - 1, 3.6), (26, -1.5, z + 2, 2.3), (19, -3, z + 3, 1.2)]), cells, knots=.2, seed=3)
+    limb(X([(42, 2, z + 3, 3.6), (46, -1, z + 9, 2.3), (50, -3, z + 13, 1.1)]), cells, knots=.2, seed=4)
+    limb(X([(41, 1, z - 5, 3.4), (46, -2, z - 10, 2.1), (51, -4, z - 13, 1.0)]), cells, knots=.2, seed=5)
+    limb(X([(34, 1, z + 5, 3.2), (29, -2, z + 10, 2.0), (25, -4, z + 13, 1.0)]), cells, knots=.2, seed=6)
+    # up and right from the shoulder of the trunk
+    limb(X([(37, 14, z, 2.9), (41, 20, z - 1, 2.1), (44.5, 25, z - 2, 1.3), (48, 28.5, z - 2.5, .8), (52, 30, z - 2.5, .5)]), cells, knots=.15, seed=7)
+    # up from the top of the arch
+    limb(X([(27, 20, z + 1, 2.0), (24, 25, z, 1.45), (20.5, 29.5, z - 1.5, .95), (17, 32.5, z - 3, .55)]), cells, knots=.15, seed=8)
+    # rising off the long limb
+    limb(X([(12, 16.6, z + 2.2, 1.25), (10, 21, z + 1.5, .9), (6.5, 25.5, z, .65), (3, 28.5, z - 1, .45)]), cells, knots=.12, seed=9)
+    limb(X([(-3, 13.8, z + 2.4, 1.05), (-6, 18, z + 2, .8), (-9.5, 22.5, z + 1, .55), (-13, 25.5, z, .45)]), cells, knots=.12, seed=10)
+    limb(X([(-17, 15.6, z + 1.5, .8), (-20, 19, z + 1, .6), (-23, 23, z + .5, .45)]), cells, seed=11)
+    # towards and away from the camera, for depth
+    limb(X([(18, 19.4, z + 1.8, 1.1), (16, 22.5, z + 7, .75), (13, 24.5, z + 10.5, .45)]), cells, seed=12)
+    limb(X([(7, 15, z + 2.4, .9), (7, 20, z - 4, .65), (4.5, 24, z - 8.5, .45)]), cells, seed=13)
+    limb(X([(32, 18, z + .5, 1.3), (31, 23, z - 4, .9), (28, 26, z - 8, .5)]), cells, seed=14)
+    # twigs hanging below the limb, carrying the low blossom
+    limb(X([(1, 13, z + 2.4, .75), (-1.5, 10.5, z + 3, .55), (-3, 8.8, z + 3, .45)]), cells, seed=15)
+    limb(X([(-13, 14.2, z + 1.8, .65), (-15, 12, z + 2.4, .5), (-16, 10.5, z + 2.6, .45)]), cells, seed=16)
+    limb(X([(15, 17, z + 2, .75), (17.5, 13.5, z + 2.6, .55), (18, 11.5, z + 3, .45)]), cells, seed=17)
 
-    # make a good flat bed on top of the limb where the sleeper lies
-    bed_y = 18
-    for x in range(1, 12):
-        for dz in range(int(z) + 1, int(z) + 5):
-            for y in range(bed_y, bed_y + 3):
+    # a good flat bed on top of the limb where the sleeper lies
+    bed_y = 16
+    bed0, bed1 = 1, 9
+    for x in range(bed0 - 2, bed1 + 3):
+        for dz in range(int(z) - 2, int(z) + 8):
+            for y in range(bed_y, bed_y + 4):
                 cells.discard((x, y, dz))
-    SLEEPER['y'] = float(bed_y)
-    for x in range(2, 11):
+    for x in range(bed0 - 1, bed1 + 1):
         for dz in range(int(z) + 1, int(z) + 4):
             cells.add((x, bed_y - 1, dz))
+            cells.add((x, bed_y - 2, dz))
+    SLEEPER['x'] = 5.2
+    SLEEPER['y'] = float(bed_y)
+    SLEEPER['z'] = z + 3.55
     wood_from_cells(cells)
 
-    keep = lambda x, y, zz: (-1 <= x <= 13 and 16 <= y <= 24 and z - 3 <= zz <= z + 9)  # clear air round the sleeper
-    for i, (cx, cy, cz, rx, ry, rz) in enumerate([
-        (11, 31, z - 3, 12, 4.8, 9), (-3, 29.5, z - 1, 10, 4, 7.5), (-16, 28, z, 9, 4.2, 7), (-30, 25, z, 8.5, 5, 6.5),
-        (42, 30, z - 3, 9, 5, 7.5), (50, 25.5, z - 2, 5.5, 5, 5), (30, 26, z - 8, 7, 4, 6), (22, 27, z + 8, 7, 3.6, 5),
-        (9, 24, z + 10, 5.5, 2.8, 4), (-1, 25, z - 9, 7, 3.2, 5), (-9, 9.2, z + 3, 4.8, 2.6, 3.8), (-22, 11.5, z + 2, 4, 2.8, 3.4),
-        (20, 8.6, z + 3, 3.8, 2.4, 3.2), (-21, 22, z + 5, 4, 2.4, 3.4), (34, 20.5, z + 3, 5, 2.8, 4),
-    ]):
-        blossom(cx, cy, cz, rx, ry, rz, 100 + i, keep_out=keep)
+    keep = lambda x, y, zz: (-3 <= x <= 13 and 15 <= y <= 23 and z - 3 <= zz <= z + 10)  # clear air round the sleeper
+    clouds = [
+        (18, 33.5, z - 3, 10, 4.2, 8), (3, 29.8, z - 1, 8.5, 3.6, 6.5), (-13, 26.2, z, 7.5, 3.4, 6), (-33, 22, z + .5, 8.5, 4.8, 6.5),
+        (46, 31, z - 2.5, 9, 4.6, 7), (56, 26.5, z - 2, 5, 4.4, 4.5), (31, 27, z - 8.5, 6.5, 3.4, 5), (13, 25.4, z + 11, 5, 2.6, 4),
+        (4.5, 25.2, z - 9.5, 6, 3, 4.5), (-23, 24.4, z + 1, 5, 2.6, 4.2),
+        # low ones under the limb
+        (-3, 8.6, z + 3, 4.2, 2.4, 3.2), (-16, 10.8, z + 3, 4.6, 2.6, 3.6), (18, 10.6, z + 3.2, 3.6, 2.2, 3),
+    ]
+    for i, (cx, cy, cz, rx, ry, rz) in enumerate(clouds):
+        blossom(cx * k, cy, cz, rx * k, ry, rz, 100 + i, keep_out=keep)
 
     # the rocks the trunk grows out of
-    boulder(36, -1, z + 5, 12, 8.5, 10, 41)
-    boulder(25, -2, z + 7, 8, 5, 6, 42)
-    boulder(43, -1, z - 5, 9, 7.5, 9, 43)
-    boulder(32, -2, z - 9, 8, 6, 6, 44)
-    boulder(18, -2, z + 3, 4, 2.5, 4, 45)
+    boulder(40 * k, -2, z + 6, 11, 8.5, 9, 41)
+    boulder(29 * k, -3, z + 8, 7, 4.5, 5.5, 42)
+    boulder(48 * k, -1, z - 5, 9, 8, 9, 43)
+    boulder(37 * k, -2, z - 10, 8, 6, 6, 44)
+    boulder(20 * k, -3, z + 3, 3.6, 2.2, 3.6, 45)
     # lone rocks around the meadow, like the big one on the left of the picture
     boulder(-41, 0, z + 2, 7, 5, 5.5, 46)
     boulder(-48, 0, z + 5, 3.5, 2.4, 3, 47)
@@ -856,13 +901,13 @@ def boulder(cx, cy, cz, rx, ry, rz, seed):
             for y in range(int(cy - ry - 2), int(cy + ry + 3)):
                 d = min(((x + .5 - lx) / (rx * lr)) ** 2 + ((y + .5 - ly) / (ry * lr)) ** 2 + ((z + .5 - lz) / (rz * lr)) ** 2 for lx, ly, lz, lr in lumps)
                 d = min(d, ((x + .5 - cx) / rx) ** 2 + ((y + .5 - cy) / ry) ** 2 + ((z + .5 - cz) / rz) ** 2)
-                n = float(fbm(np.array((x + y * .4) / 4.0), np.array((z - y * .5) / 4.0), 2, seed))
+                n = sfbm((x + y * .4) / 4.0, (z - y * .5) / 4.0, 2, seed)
                 if d + n * .28 > 1.0:
                     continue
                 name = S.name(x, y, z)
                 if 'cherry_wood' in name:
                     continue
-                n2 = float(vnoise(np.array((x + y) / 2.2), np.array((z - y) / 2.2), seed + 1))
+                n2 = snoise((x + y) / 2.2, (z - y) / 2.2, seed + 1)
                 st = 'stone' if n2 > .15 else 'andesite' if n2 > -.25 else 'tuff' if n2 > -.5 else 'cobblestone'
                 S.set(x, y, z, st)
     # moss on the tops
@@ -871,7 +916,7 @@ def boulder(cx, cy, cz, rx, ry, rz, seed):
             for y in range(int(cy + ry + 2), int(cy - ry - 3), -1):
                 name = S.name(x, y, z)
                 if name.endswith(('stone', 'andesite', 'tuff', 'cobblestone')):
-                    if float(vnoise(np.array(x / 3.0), np.array(z / 3.0), seed + 2)) > .1 and S.is_air(x, y + 1, z):
+                    if snoise(x / 3.0, z / 3.0, seed + 2) > .1 and S.is_air(x, y + 1, z):
                         S.set(x, y, z, 'moss_block')
                     break
                 if name != 'minecraft:air':
@@ -975,9 +1020,8 @@ def make_plants():
             keep = 1.0 if d < 42 else .55 if d < 70 else .26
             if rnd.random() > keep:
                 continue
-            nx, nz = np.array(x / 11.0), np.array(z / 11.0)
-            f = float(fbm(nx, nz, 2, 61))          # where the flower drifts are
-            p = float(fbm(np.array(x / 7.0), np.array(z / 7.0), 2, 62))  # where the petals lie
+            f = sfbm(x / 11.0, z / 11.0, 2, 61)    # where the flower drifts are
+            p = sfbm(x / 7.0, z / 7.0, 2, 62)  # where the petals lie
             under_tree = math.hypot((x - 8) / 44, (z - TREE_Z) / 24) < 1
             r = rnd.random()
             # petals on the ground under the tree and in pink drifts along the yard
@@ -1085,8 +1129,8 @@ def far_colour(x, z, h, slope):
     forest = np.array([.20, .38, .17])
     rock = np.array([.46, .47, .50])
     snow = np.array([.92, .94, .97])
-    n = float(fbm(np.array(x / 130.0), np.array(z / 130.0), 3, 81))
-    speck = float(vnoise(np.array(x / 19.0), np.array(z / 19.0), 82))
+    n = sfbm(x / 130.0, z / 130.0, 3, 81)
+    speck = snoise(x / 19.0, z / 19.0, 82)
     c = g * (.95 + .2 * n)
     if n > -.15:
         c = forest * (1 + .3 * speck)
@@ -1192,12 +1236,12 @@ def make_meta():
     lines.append(f'indoors {HOUSE["x0"]} 0 {HOUSE["z0"]} {HOUSE["x1"] + 1} 26 {HOUSE["z1"] + 1}')
     eye = FLOOR + 1.42
     # camera keys: x y z, look x y z, field of view
-    front = (-7.5, 4.6, 45.0, -5.5, 9.6, -6.0, 56.0)
+    front = (-2.5, 5.0, 43.0, -8.0, 9.8, -6.0, 56.0)
     lines.append('front ' + ' '.join(f'{v:.2f}' for v in front))
     tree = (2.0, 8.4, TREE_Z + 27.0, 5.0, 15.2, TREE_Z, 54.0)
     lines.append('tree ' + ' '.join(f'{v:.2f}' for v in tree))
     fly_out = [
-        (-3.0, 4.6, 30.0, -1.0, 6.4, -6.0, 57.0),
+        (-1.6, 4.6, 30.0, -2.0, 6.4, -6.0, 57.0),
         (-0.6, eye + .4, 16.0, 0.0, eye + .4, -6.0, 60.0),
         (0.0, eye, 6.0, 0.0, eye, -10.0, 68.0),
         (0.0, eye, -2.0, 0.0, eye, -22.0, 72.0),

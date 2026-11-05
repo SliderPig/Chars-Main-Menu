@@ -19,12 +19,10 @@ public final class GlassButton extends AbstractButton {
     private ResourceLocation icon;
     private int iconU, iconV, iconW, iconH, texW, texH;
     private boolean leftText;
-    private final int rightX;
 
     public GlassButton(int x, int y, int w, int h, Component label, Runnable press) {
         super(x, y, w, h, label);
         this.press = press;
-        this.rightX = x;
     }
 
     public GlassButton mirrors(AbstractWidget real) {
