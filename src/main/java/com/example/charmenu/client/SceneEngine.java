@@ -185,54 +185,58 @@ public final class SceneEngine {
         RenderSystem.applyModelViewMatrix();
         RenderSystem.setShaderColor(1, 1, 1, 1);
 
-        Vector3f eye = new Vector3f((float) cam.x, (float) cam.y, (float) cam.z);
-        Vector3f look = new Vector3f((float) cam.lx, (float) cam.ly, (float) cam.lz);
-        Vector3f forward = new Vector3f(look).sub(eye).normalize();
-        Vector3f right = new Vector3f(forward).cross(0, 1, 0).normalize();
-        Vector3f up = new Vector3f(right).cross(forward).normalize();
-        float tanY = (float) Math.tan(Math.toRadians(cam.fov) / 2), tanX = tanY * aspect;
-        float time = (float) (dir.time() % 7200.0);
-        float[] sun = data == null ? new float[] {-0.56f, 0.66f, 0.5f} : new float[] {(float) data.sun[0], (float) data.sun[1], (float) data.sun[2]};
+        try {
+            Vector3f eye = new Vector3f((float) cam.x, (float) cam.y, (float) cam.z);
+            Vector3f look = new Vector3f((float) cam.lx, (float) cam.ly, (float) cam.lz);
+            Vector3f forward = new Vector3f(look).sub(eye).normalize();
+            Vector3f right = new Vector3f(forward).cross(0, 1, 0).normalize();
+            Vector3f up = new Vector3f(right).cross(forward).normalize();
+            float tanY = (float) Math.tan(Math.toRadians(cam.fov) / 2), tanX = tanY * aspect;
+            float time = (float) (dir.time() % 7200.0);
+            float[] sun = data == null ? new float[] {-0.56f, 0.66f, 0.5f} : new float[] {(float) data.sun[0], (float) data.sun[1], (float) data.sun[2]};
 
-        drawSky(forward, right, up, tanX, tanY, time, sun);
+            drawSky(forward, right, up, tanX, tanY, time, sun);
 
-        if (ready) {
-            Matrix4f view = new Matrix4f().lookAt(eye, look, new Vector3f(0, 1, 0));
-            Matrix4f farProjection = new Matrix4f().perspective((float) Math.toRadians(cam.fov), aspect, 60f, 11000f);
-            Matrix4f nearProjection = new Matrix4f().perspective((float) Math.toRadians(cam.fov), aspect, 0.06f, 900f);
+            if (ready) {
+                Matrix4f view = new Matrix4f().lookAt(eye, look, new Vector3f(0, 1, 0));
+                Matrix4f farProjection = new Matrix4f().perspective((float) Math.toRadians(cam.fov), aspect, 60f, 11000f);
+                Matrix4f nearProjection = new Matrix4f().perspective((float) Math.toRadians(cam.fov), aspect, 0.06f, 900f);
 
-            RenderSystem.enableDepthTest();
-            RenderSystem.depthFunc(GL11.GL_LEQUAL);
-            RenderSystem.depthMask(true);
-            RenderSystem.enableCull();
-            RenderSystem.clear(GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
-            drawFar(view, farProjection, eye, time, sun);
-            RenderSystem.clear(GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
+                RenderSystem.enableDepthTest();
+                RenderSystem.depthFunc(GL11.GL_LEQUAL);
+                RenderSystem.depthMask(true);
+                RenderSystem.enableCull();
+                RenderSystem.clear(GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
+                drawFar(view, farProjection, eye, time, sun);
+                RenderSystem.clear(GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
 
-            boolean high = MenuConfig.highQuality;
-            drawBlocks(view, nearProjection, eye, time, sun, high);
-            VertexBuffer.unbind();
+                boolean high = MenuConfig.highQuality;
+                drawBlocks(view, nearProjection, eye, time, sun, high);
+                VertexBuffer.unbind();
 
-            // what follows goes through the game's normal way of drawing, which reads these two
-            RenderSystem.setProjectionMatrix(new Matrix4f(nearProjection), VertexSorting.DISTANCE_TO_ORIGIN);
-            stack.setIdentity();
-            stack.mulPoseMatrix(view);
+                // what follows goes through the game's normal way of drawing, which reads these two
+                RenderSystem.setProjectionMatrix(new Matrix4f(nearProjection), VertexSorting.DISTANCE_TO_ORIGIN);
+                stack.setIdentity();
+                stack.mulPoseMatrix(view);
+                RenderSystem.applyModelViewMatrix();
+
+                RenderSystem.disableCull();
+                setCommon(Shaders.figure, view, nearProjection, eye, time, sun);
+                Figure.draw(data, time);
+                RenderSystem.enableCull();
+
+                Paintings.draw(data.paintings);
+                Petals.lanternGlow(lamps, cam, right.x, right.y, right.z, up.x, up.y, up.z, time);
+                Petals.draw(cam, time, high);
+            }
+
+        } finally {
+            // whatever happened above, hand the game back the state it gave us
+            stack.popPose();
             RenderSystem.applyModelViewMatrix();
-
-            RenderSystem.disableCull();
-            setCommon(Shaders.figure, view, nearProjection, eye, time, sun);
-            Figure.draw(data, time);
-            RenderSystem.enableCull();
-
-            Paintings.draw(data.paintings);
-            Petals.lanternGlow(lamps, cam, right.x, right.y, right.z, up.x, up.y, up.z, time);
-            Petals.draw(cam, time, high);
+            RenderSystem.setProjectionMatrix(savedProjection, savedSorting);
+            restoreState();
         }
-
-        stack.popPose();
-        RenderSystem.applyModelViewMatrix();
-        RenderSystem.setProjectionMatrix(savedProjection, savedSorting);
-        restoreState();
     }
 
     private static void restoreState() {

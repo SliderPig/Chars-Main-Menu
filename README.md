@@ -5,8 +5,9 @@ A hand-built cherry wood house as the Minecraft main menu. Forge 1.20.1, PC side
 ## What you see
 - The game opens on the front of a cherry wood house in a blossom-filled yard, with see-through glass buttons on the left.
 - Press a button: the buttons fade, the double doors swing open with a soft creak, the camera glides up the path, through the doors, down the lamp-lit hall,
-  the back doors open, and it flies out into the garden and arcs round to a giant cherry tree with **your own skin** asleep on its long branch. About 4.7 seconds. Any click skips to the end.
-- The screen you chose (worlds, servers, options, mods...) opens over that view instead of dirt. Going back to the title flies the camera back round through the house.
+  the back doors open, and it flies out into the garden and arcs round to a giant cherry tree with **your own skin** asleep on its long branch, a small black cat curled on your chest and your hand slowly stroking it. About 4.7 seconds. Any click skips to the end.
+- Every menu screen with no world loaded (worlds, Create World and its tabs, servers, options, mods...) opens over that view instead of dirt, with see-through lists, buttons, tabs and text boxes. Going back to the title flies the camera back round through the house.
+- Cherry petals swirl in the air the whole way: at the house front, in the doorway, down the hall and round the tree. By the tree you can just hear the cat purr.
 - Coming back from a world: a soft fade in at the house front.
 
 ## Settings

@@ -50,7 +50,12 @@ def main():
     cp.append(os.path.join(META, 'versions', VERSION, VERSION + '.jar'))
 
     os.makedirs(os.path.join(RUN, 'mods'), exist_ok=True)
-    shutil.rmtree(os.path.join(RUN, 'saves', 'charmenu-check'), ignore_errors=True)
+    # last run's world stays, under another name, so the world list has something in it
+    last = os.path.join(RUN, 'saves', 'charmenu-check')
+    if os.path.isdir(last):
+        keep = os.path.join(RUN, 'saves', 'Cherry World')
+        shutil.rmtree(keep, ignore_errors=True)
+        shutil.move(last, keep)
     if MODE != 'lab':
         shutil.rmtree(os.path.join(RUN, 'screenshots'), ignore_errors=True)
     os.makedirs(os.path.join(RUN, 'lab'), exist_ok=True)

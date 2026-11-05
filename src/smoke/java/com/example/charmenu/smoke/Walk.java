@@ -94,6 +94,7 @@ public final class Walk {
     private static void arrival(String tag) {
         later(1, () -> Director.get().skip());
         shot(45, tag + "04_tree");
+        shot(36, tag + "04_tree_later");
     }
 
     @SubscribeEvent
