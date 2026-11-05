@@ -173,12 +173,12 @@ final class Figure {
         m.body.setRotation(0, 0, 0);
         m.body.zScale = 1 + 0.03f * breath;
 
-        // the arm on the camera's side is behind the head, so nothing hides the cat
-        m.leftArm.setPos(5, 2, 2.6f);
-        m.leftArm.setRotation(-172 * d, 0, -18 * d);
-        // the other hand reaches across, rests on the cat and strokes it from the shoulders to the tail, slowly
+        // the arm on the camera's side is tucked under the head, so nothing hides the cat
+        m.leftArm.setPos(5, 2, 3.6f);
+        m.leftArm.setRotation(-176 * d, 0, -16 * d);
+        // the other arm lies down along the body with its hand on the cat, stroking along its back, slowly
         m.rightArm.setPos(-5, 2, -0.2f - 0.06f * breath);
-        m.rightArm.setRotation((-40 + 6 * stroke) * d, 0, -(66 - 22 * stroke) * d);
+        m.rightArm.setRotation((-26 + 8 * stroke) * d, 0, -(36 - 14 * stroke) * d);
 
         // left leg dangles off the branch on the camera's side and rocks a tiny bit
         float rock = (float) Math.sin(time * 0.45) * 2.5f * d;
