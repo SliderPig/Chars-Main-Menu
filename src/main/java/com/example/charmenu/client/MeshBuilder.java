@@ -91,7 +91,6 @@ final class MeshBuilder {
         float offX, offY, offZ;
         float tintR = 1, tintG = 1, tintB = 1;
         float swayBase, swayGain, cellY;
-        boolean bothLowered;
 
         @Override
         public VertexConsumer vertex(double px, double py, double pz) {
@@ -169,6 +168,7 @@ final class MeshBuilder {
         RandomSource rand = RandomSource.create();
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         Map<Long, Part> parts = new HashMap<>();
+        boolean high = MenuConfig.highQuality;
         ModelBlockRenderer.enableCaching();
         try {
             for (int i = 0; i < d.nx; i++) {
@@ -184,10 +184,12 @@ final class MeshBuilder {
                         int y = d.y0 + j;
                         pos.set(x, y, z);
 
+                        // low quality: every third bit of grass and flowers, and no second layer of leaves. Fewer than half the shapes to draw.
+                        if (!high && state.getBlock() instanceof BushBlock && ((x * 31 + z * 17) & 3) != 0) continue;
                         boolean leaf = state.getBlock() instanceof LeavesBlock;
                         if (leaf) {
                             boolean top = level.touchesAir(x, y, z);
-                            boolean second = !top && level.secondLayer(x, y, z);
+                            boolean second = !top && high && level.secondLayer(x, y, z);
                             if (!top && !second) continue;
                             level.leafMode(x, y, z, second);
                         }

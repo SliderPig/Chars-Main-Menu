@@ -45,7 +45,11 @@ public final class MenuSettingsScreen extends Screen {
         int y = height / 2 - 66;
         toggle(y, "charmenu.settings.scene", () -> MenuConfig.enabled, v -> MenuConfig.enabled = v);
         toggle(y += 25, "charmenu.settings.animation", () -> MenuConfig.animation, v -> MenuConfig.animation = v);
-        toggle(y += 25, "charmenu.settings.quality", () -> MenuConfig.highQuality, v -> MenuConfig.highQuality = v);
+        toggle(y += 25, "charmenu.settings.quality", () -> MenuConfig.highQuality, v -> {
+            MenuConfig.highQuality = v;
+            // low quality leaves out some of the plants and leaves, so the scene gets built again
+            SceneEngine.freeAll();
+        });
         toggle(y += 25, "charmenu.settings.ambience", () -> MenuConfig.ambience, v -> MenuConfig.ambience = v);
         toggle(y += 25, "charmenu.settings.music", () -> MenuConfig.music, v -> MenuConfig.music = v);
         addRenderableWidget(new GlassButton(width / 2 - 60, y + 36, 120, 20, CommonComponents.GUI_DONE, this::onClose));

@@ -744,15 +744,10 @@ def make_hall():
                 plane = (wall + 1.02) if side < 0 else (wall - 0.02)
                 name, pw, ph = arts[(side, i)]
                 PAINTINGS.append((name, plane, FLOOR + 3 + (2 - ph) / 2, za + 1 + (2 - pw) / 2, pw, ph, 1 if side < 0 else -1))
-                f = 'east' if side > 0 else 'west'
                 for z in range(za, zb + 1):
                     S.set(inner, FLOOR, z, stair('cherry', 'west' if side < 0 else 'east'))
                 S.set(inner, FLOOR, za, 'potted_azalea_bush')
                 S.set(inner, FLOOR, zb, 'potted_azalea_bush')
-    # a few petals blown in through the doors, lying on the rug
-    rnd = random.Random(55)
-    for z, x in ((-2, -2), (-3, 1), (-2, 0), (-20, 1), (-21, -2), (-19, -1), (-21, 0)):
-        S.set(x, FLOOR + 1 if False else FLOOR, z, S.name(x, FLOOR, z))
     # the two end walls inside, around the door frames (a clean look when looking down the hall)
     for z in (z1, z0):
         for x in range(x0 + 1, x1):
