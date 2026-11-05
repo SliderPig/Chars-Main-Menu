@@ -117,21 +117,21 @@ final class Figure {
         body.zScale = 1 + 0.045f * catBreath;
 
         // chin resting on the chest, leaning into the hand as it comes past
-        head.setPos(0, 15.6f, -8.2f);
+        head.setPos(0, 17.4f, -8.0f);
         head.setRotation((14 - 6 * stroke) * d, (30 + 5 * stroke) * d, 6 * d);
 
         // the tail wraps round the near side of the body, and its end flicks now and then
         float flickWhen = (float) Math.max(0, Math.sin(time * 0.43) - 0.35) / 0.65f;
         float flick = (float) Math.sin(time * 5.1) * 26 * d * flickWhen + (float) Math.sin(time * 0.8) * 5 * d;
-        tail1.setPos(0, 14.4f, 7.5f);
+        tail1.setPos(0, 18.2f, 7.5f);
         tail1.setRotation(90 * d, -62 * d, 0);
-        tail2.setPos(-7f, 14.4f, 11.2f);
+        tail2.setPos(-7f, 18.2f, 11.2f);
         tail2.setRotation(90 * d, -128 * d + flick, 0);
 
         pose.pushPose();
         // the middle of the chest, on top of the shirt
         float lift = 0.0035f * breath * 16;
-        pose.translate(0.02, 5.2 / 16.0, (-2.3 - lift) / 16.0 - CAT_SCALE * (15.0 / 16.0));
+        pose.translate(0.02, 6.2 / 16.0, (-2.3 - lift) / 16.0 - CAT_SCALE * (20.0 / 16.0));
         pose.mulPose(Axis.XP.rotationDegrees(90));
         pose.mulPose(Axis.YP.rotationDegrees(180));
         // lying a little across the chest, not straight along it
@@ -169,7 +169,7 @@ final class Figure {
         m.rightArm.setRotation(-172 * d, 0, 18 * d);
         // left hand rests on the cat and strokes it from the shoulders to the tail, slowly
         m.leftArm.setPos(5, 2, -0.2f - 0.06f * breath);
-        m.leftArm.setRotation((-38 + 7 * stroke) * d, 0, (70 - 24 * stroke) * d);
+        m.leftArm.setRotation((-46 + 7 * stroke) * d, 0, (70 - 24 * stroke) * d);
 
         // left leg dangles off the branch on the camera's side and rocks a tiny bit
         float rock = (float) Math.sin(time * 0.45) * 2.5f * d;

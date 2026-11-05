@@ -1316,7 +1316,7 @@ def make_meta():
     # camera keys: x y z, look x y z, field of view
     front = (-2.5, 5.0, 43.0, -8.0, 9.8, -6.0, 56.0)
     lines.append('front ' + ' '.join(f'{v:.2f}' for v in front))
-    tree = (12.4, 19.6, TREE_Z + 18.0, 12.4, 16.9, TREE_Z + 2.0, 50.0)
+    tree = (13.4, 19.6, TREE_Z + 18.0, 13.4, 16.9, TREE_Z + 2.0, 50.0)
     lines.append('tree ' + ' '.join(f'{v:.2f}' for v in tree))
     fly_out = [
         (-1.6, 4.6, 30.0, -2.0, 6.4, -6.0, 57.0),
